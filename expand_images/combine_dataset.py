@@ -2,6 +2,10 @@ import shutil
 import os
 import tqdm
 
+###################################################
+# 功能：将两个文件夹中的文件复制到另外一个文件夹完成文件合并
+###################################################
+
 
 def combine_dataset(download_root, official_root, combine_root):
     if os.path.exists(combine_root):

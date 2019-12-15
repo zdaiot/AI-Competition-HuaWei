@@ -8,15 +8,33 @@ class CrossEntropyLabelSmooth(nn.Module):
     Reference:
     Szegedy et al. Rethinking the Inception Architecture for Computer Vision. CVPR 2016.
     Equation: q_i = (1 - epsilon) * a_i + epsilon / N.
-
-    Args:
-        num_classes (int): number of classes.
-        epsilon (float): weight.
     """
-    def __init__(self, num_classes, epsilon=0.1, use_gpu=True):
+    def __init__(self, num_classes, epsilon=0.1, alpha=None, use_gpu=True):
+        """
+
+        Args:
+            num_classes: int, 类别总数
+            epsilon: float, 系数
+            alpha: list, float or list, 类别的权重
+            use_gpu: bool, 是否使用gpu
+        """
         super(CrossEntropyLabelSmooth, self).__init__()
         self.num_classes = num_classes
+        self.alpha = alpha
         self.epsilon = epsilon
+
+        # alpha = [1 for x in range(self.num_classes)]
+        # alpha[25], alpha[26], alpha[28] = 1.5, 0.9, 0.95
+        # alpha[30], alpha[32], alpha[31] = 1.3, 1.2, 1.1
+        # alpha[33], alpha[37] = 2, 0.9
+        # alpha[48], alpha[51] = 1.2, 0.95
+        # alpha[49], alpha[50] = 2.5, 1.3
+
+        if isinstance(alpha, (float, int)):
+            self.alpha = torch.FloatTensor([alpha, 1-alpha])
+        if isinstance(alpha, list):
+            self.alpha = torch.FloatTensor(alpha)
+
         self.use_gpu = use_gpu
         self.logsoftmax = nn.LogSoftmax(dim=1)
 
@@ -27,6 +45,12 @@ class CrossEntropyLabelSmooth(nn.Module):
             targets: ground truth labels with shape (num_classes)
         """
         log_probs = self.logsoftmax(inputs)
+
+        if self.alpha is not None:
+            if self.alpha.type() != inputs.data.type():
+                self.alpha = self.alpha.type_as(inputs.data)
+            log_probs = log_probs * self.alpha
+
         '''
         scatter_第一个参数为1表示分别对每行填充；targets.unsqueeze(1)得到的维度为[num_classes, 1]；
         填充方法为：取出targets的第i行中的第一个元素（每行只有一个元素），记该值为j；则前面tensor中的(i,j)元素填充1；

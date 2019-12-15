@@ -22,11 +22,11 @@ class DatasetStatistic:
         """获取每一类别需要额外补充的样本数目
 
         Args:
-            thresh: 样本数目阈值
-            more_than_thresh_number: 大于thresh的类别的补充数目
-            less_than_thresh_number: 小于thresh的类别的补充数目
+            thresh: int, 样本数目阈值
+            more_than_thresh_number: int, 大于thresh的类别的补充数目
+            less_than_thresh_number: int, 小于thresh的类别的补充数目
         Returns:
-            name_expand_number: dir, {'大雁塔‘： 10, ...}
+            name_expand_number: dict, {'大雁塔‘： 10, ...}
         """
         labels_number = self.get_label_number()
         label_to_name = self.get_label_to_name()
@@ -40,6 +40,13 @@ class DatasetStatistic:
         return name_expand_number
 
     def get_name_less_than_thresh(self, thresh):
+        """ 筛选出数据集中类别数目小于thresh的类
+        Args:
+            thresh: int, 样本数目阈值
+
+        Returns:
+            names: list, 数据集中类别数目小于thresh的类名称
+        """
         labels_number = self.get_label_number()
         label_to_name = self.get_label_to_name()
         names = []

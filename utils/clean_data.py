@@ -56,7 +56,18 @@ def choose_data(choose_dict):
             shutil.copy(os.path.join(origin_path, name), save_path)
 
 
+def split_official_pseudo(origin_path, save_path):
+    # shutil.rmtree(save_path)
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
+    for name in os.listdir(origin_path):
+        if not name.startswith('img_'):
+            shutil.copy(os.path.join(origin_path, name), save_path)
+
+
 if __name__ == '__main__':
-    with open("online-service/model/label_id_name.json", 'r', encoding='utf-8') as json_file:
+    with open("data/huawei_data/label_id_name.json", 'r', encoding='utf-8') as json_file:
         label_id = json.load(json_file)
-    clean_data('data/huawei_data/combine', label_id)
+    # clean_data('data/huawei_data/combine', label_id)
+
+    split_official_pseudo('data/huawei_data/combine', 'data/huawei_data/psudeo_image')

@@ -1,13 +1,24 @@
 import argparse
 
 
+def str2bool(v):
+    if isinstance(v, bool):
+       return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
+
 def get_classify_config():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--image_size', type=tuple, default=[416, 416], help='image size')
-    parser.add_argument('--batch_size', type=int, default=6, help='batch size')
-    parser.add_argument('--epoch', type=int, default=10, help='epoch')
+    parser.add_argument('--image_size', type=int, nargs='+', default=[416, 416], help='image size')
+    parser.add_argument('--batch_size', type=int, default=24, help='batch size')
+    parser.add_argument('--epoch', type=int, default=40, help='epoch')
 
-    parser.add_argument('--augmentation_flag', type=bool, default=True,
+    parser.add_argument('--augmentation_flag', type=str2bool, nargs='?', const=True, default=True,
                         help='if true, use augmentation method in train set')
     parser.add_argument('--erase_prob', type=float, default=0.0,
                         help='probability of random erase when augmentation_flag is True')
@@ -36,7 +47,7 @@ def get_classify_config():
 
     # model hyper-parameters
     parser.add_argument('--num_classes', type=int, default=54)
-    parser.add_argument('--lr', type=float, default=3e-5, help='init lr')
+    parser.add_argument('--lr', type=float, default=3e-4, help='init lr')
     parser.add_argument('--weight_decay', type=float, default=5e-4, help='weight_decay in optimizer')
     # 学习率衰减策略
     parser.add_argument('--lr_scheduler', type=str, default='StepLR',

@@ -25,12 +25,12 @@ class PredictDownloadImage(object):
         self.std = std
         self.model, self.label_dict = self.__prepare__(label_json_path)
 
-    def predict_multi_smaples(self, samples_root, thresh={}, save_path=''):
+    def predict_multi_smaples(self, samples_root, thresh, save_path=''):
         """预测多张样本的伪标签，并将保留下的样本存放至指定的目录下
 
         Args:
             samples_root: 原始样本的路径
-            thresh: dir, {'大雁塔': 0.95, ...}
+            thresh: dict, {'大雁塔': 0.95, ...}
             save_path: 保存路径
         """
         samples_list = os.listdir(samples_root)
@@ -40,12 +40,12 @@ class PredictDownloadImage(object):
         tbar = tqdm.tqdm(images_name)
         if not os.path.exists(save_path):
             print('Making %s' % save_path)
-            os.mkdir(save_path)
+            os.makedirs(save_path)
         else:
             print('Removing %s' % save_path)
             shutil.rmtree(save_path)
             print('Making %s' % save_path)
-            os.mkdir(save_path)
+            os.makedirs(save_path)
         for image_name in tbar:
             label = image_name.split('_')[0]
             if label == '浆水鱼鱼':
@@ -54,12 +54,12 @@ class PredictDownloadImage(object):
                 label = '蜜饯张口酥饺'
             current_thresh = thresh[label]
             image_path = os.path.join(samples_root, image_name)
-            index, predict_label, remain = self.predict_single_sample(label, image_path, thresh=current_thresh)
+            index, predict_label, remain, score = self.predict_single_sample(label, image_path, thresh=current_thresh)
             if remain:
-                descript = 'Remain: %s' % image_name
-                self.save_image_label(save_path, image_path, image_name, predict_label, index)
+                descript = 'Remain: %s, Score: %.4f' % (image_name, score)
+                self.save_image_label(save_path, image_path, image_name, predict_label, index, score)
             else:
-                descript = 'Removing: %s' % image_name
+                descript = 'Removing: %s, Score: %.4f' % (image_name, score)
             tbar.set_description(desc=descript)
         return predict_results
 
@@ -67,14 +67,15 @@ class PredictDownloadImage(object):
         """对单张样本进行预测
 
         Args:
-            annotation: 标注的标签
-            sample_path: 样本路径
-            rank: 返回前rank个预测结果
+            annotation: str，标注的标签
+            sample_path: str，样本路径
+            thresh: float, 过滤阈值，高于这个阈值的则保留，低于这个阈值则删除
         Returns:
-            index: 预测的类别标号
-            label: 真实类标，如：大雁塔
+            index: int，预测的类别标号
+            label: str，真实类标，如：大雁塔
             remain: bool, True: 保留， False: 不保留
         """
+        # 只保留能够正确打开的样本
         try:
             image = Image.open(sample_path).convert('RGB')
             transforms = T.Compose([
@@ -101,24 +102,29 @@ class PredictDownloadImage(object):
             remain = False
             index = -1
             predict_label = -1
+            score = -1
+        return index, predict_label, remain, score
 
-        return index, predict_label, remain
-
-    def save_image_label(self, save_path, image_path, image_name, label, index):
-        """保存图片和类别文件
+    def save_image_label(self, save_path, image_path, image_name, label, index, score):
+        """保存图片、类别文件、得分文件
 
         Args:
-            save_path: 保存根目录
-            image_path: 原始图片路径
-            image_name: 图片名称
-            label: 真实类别名称
-            index: 类别索引
+            save_path: str，保存根目录
+            image_path: str，原始图片路径
+            image_name: str，图片名称
+            label: str，真实类别名称
+            index: int，类别索引
+            score: float，类别得分
         """
         label_file_name = image_name.replace('jpg', 'txt')
+        score_file_name = image_name.split('.')[0] + '_score.txt'
         label_file_path = os.path.join(save_path, label_file_name)
+        score_file_path = os.path.join(save_path, score_file_name)
         with open(label_file_path, 'w') as f:
             line = image_name + ', ' + str(index)
             f.writelines(line)
+        with open(score_file_path, 'w') as f:
+            f.writelines(str(score))
         save_image_path = os.path.join(save_path, image_name)
         shutil.copy(image_path, save_image_path)
 
@@ -140,9 +146,9 @@ def compute_labels_thresh(labels_scores, thresh_max=0.95, thresh_min=0.85):
     """依据各个类别的分数计算产生伪标签时的阈值
 
     Args:
-        labels_scores: dir, {'大雁塔': 0.85, ...}
-        thresh_max: 最大阈值
-        thresh_min: 最小阈值
+        labels_scores: dict, {'大雁塔': 0.85, ...}
+        thresh_max: float，最大阈值
+        thresh_min: float，最小阈值
     Returns:
         labels_thresh: 类别对应的阈值 dir, {’大雁塔': 0.85, ...}
     """
@@ -153,17 +159,18 @@ def compute_labels_thresh(labels_scores, thresh_max=0.95, thresh_min=0.85):
     for label, score in labels_scores.items():
         thresh = (max_score - score) / (max_score - min_score) * (thresh_max - thresh_min) + thresh_min
         labels_thresh[label.split('/')[1]] = thresh
-    
+
     return labels_thresh
 
 
 if __name__ == "__main__":
     config = get_classify_config()
-    weight_path = 'checkpoints/se_resnext101_32x4d/log-2019-12-02T16-17-25-0.9640/model_best.pth'
+    model_path = 'checkpoints/se_resnext101_32x4d/log-2019-12-06T00-15-51'
+    weight_path = os.path.join(model_path, 'model_best.pth')
     label_json_path = 'data/huawei_data/label_id_name.json'
-    samples_root = '/media/mxq/data/competition/HuaWei/下载的图片/酥饺'
-    save_path = '/media/mxq/data/competition/HuaWei/下载的图片/酥饺_伪标签'
-    labels_score_file = 'checkpoints/se_resnext101_32x4d/log-2019-12-02T16-17-25-0.9640/classes_acc.json'
+    samples_root = 'data/huawei_data/psudeo_image'
+    save_path = 'data/huawei_data/psudeo'
+    labels_score_file = os.path.join(model_path, 'classes_acc.json')
 
     thresh_max = 0.90
     thresh_min = 0.85
@@ -173,5 +180,6 @@ if __name__ == "__main__":
         labels_score = json.load(f)
     labels_thresh = compute_labels_thresh(labels_score, thresh_max, thresh_min)
     print(labels_thresh)
-    predict_download_images = PredictDownloadImage(config.model_type, config.num_classes, weight_path, config.image_size, label_json_path, mean=mean, std=std)
+    predict_download_images = PredictDownloadImage(config.model_type, config.num_classes, weight_path,
+                                                   config.image_size, label_json_path, mean=mean, std=std)
     predict_download_images.predict_multi_smaples(samples_root, thresh=labels_thresh, save_path=save_path)

@@ -27,6 +27,7 @@ class DemoResults(object):
         self.dataset_root = config.dataset_root
         self.model_type = config.model_type
         self.classes_num = config.num_classes
+        self.drop_rate = config.drop_rate
         self.image_size = config.image_size
         self.weight_path = weight_path
         self.fold = str(fold)
@@ -120,7 +121,7 @@ class DemoResults(object):
             label_dict: dict，类标名称与类标之间的对应关系
         """
         prepare_model = PrepareModel()
-        model = prepare_model.create_model(self.model_type, self.classes_num, 0, pretrained=False)
+        model = prepare_model.create_model(self.model_type, self.classes_num, self.drop_rate, pretrained=False)
         model.load_state_dict(torch.load(self.weight_path)['state_dict'])
         print('Successfully Loaded from %s' % self.weight_path)
         model = model.cuda()
@@ -146,7 +147,7 @@ if __name__ == "__main__":
 
     weight_path = os.path.join('checkpoints', model_type)
     lists = os.listdir(weight_path)  # 获得文件夹内所有文件
-    lists.sort(key=lambda fn: os.path.getmtime(weight_path + '/' + fn))  # 排序
+    lists.sort(key=lambda fn: os.path.getmtime(weight_path + '/' + fn))  # 按照最近修改时间排序
     weight_path = os.path.join(weight_path, lists[-1], 'model_best.pth')
 
     # 先删除该目录下所有的文件，再建立该文件夹
