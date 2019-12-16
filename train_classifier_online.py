@@ -79,11 +79,14 @@ class TrainVal:
             print('Using multi scale training.')
         print('USE LOSS: {}'.format(config.loss_name))
 
+        config = prepare_data_on_modelarts(config)
+        self.train_url = config.train_url
+
         # 拷贝预训练权重
         print("=> using pre-trained model '{}'".format(config.model_type))
         os.environ['TORCH_MODEL_ZOO'] = '../pre-trained_model/pytorch'
         if not mox.file.exists('../pre-trained_model/pytorch/se_resnext101_32x4d-3b2fe3d8.pth'):
-            mox.file.copy('s3://Code-zdaiot/model_zoo/se_resnext101_32x4d-3b2fe3d8.pth',
+            mox.file.copy('s3://combine-zdaiot/model_zoo/se_resnext101_32x4d-3b2fe3d8.pth',
                           '../pre-trained_model/pytorch/se_resnext101_32x4d-3b2fe3d8.pth')
             print('copy pre-trained model from OBS to: %s success' %
                   (os.path.abspath('../pre-trained_model/pytorch/se_resnext101_32x4d-3b2fe3d8.pth')))
@@ -219,23 +222,25 @@ class TrainVal:
                 'state_dict': self.model.module.state_dict(),
                 'max_score': self.max_accuracy_valid
             }
-            self.solver.save_checkpoint(
+            self.solver.save_checkpoint_online(
                 os.path.join(
                     self.model_path,
                     '%s_fold%d.pth' % (self.config.model_type, self.fold)
                 ),
                 state,
-                is_best
+                is_best,
+                self.train_url
             )
 
             if epoch % self.save_interval == 0:
-                self.solver.save_checkpoint(
+                self.solver.save_checkpoint_online(
                     os.path.join(
                         self.model_path,
                         '%s_epoch%d_fold%d.pth' % (self.config.model_type, epoch, self.fold)
                     ),
                     state,
-                    False
+                    False,
+                    self.train_url
                 )
 
             # 写到tensorboard中
