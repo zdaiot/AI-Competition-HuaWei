@@ -73,8 +73,8 @@ def get_classify_config():
     parser.add_argument('--gamma', type=float, default=2, help='Hyperparameter for Focal loss.')
 
     # 路径
-    parser.add_argument('--save_path', type=str, default='./checkpoints')
-    parser.add_argument('--dataset_root', type=str, default='data/huawei_data/combine')
+    parser.add_argument('--train_url', type=str, default='./checkpoints', help='the path to save training outputs')
+    parser.add_argument('--data_url', type=str, default='data/huawei_data/combine')
 
     config = parser.parse_args()
 

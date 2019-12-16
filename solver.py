@@ -1,10 +1,13 @@
 '''
 该文件的功能：实现模型的前向传播，反向传播，损失函数计算，保存模型，加载模型功能
 '''
-import numpy as np
 import torch
 import shutil
 import os
+try:
+    import moxing as mox
+except:
+    print('not use moxing')
 
 
 class Solver:
@@ -91,6 +94,26 @@ class Solver:
             print('Saving Best Model.')
             save_best_path = '/'.join(save_path.split('/')[:-1] + ['model_best.pth'])
             shutil.copyfile(save_path, save_best_path)
+
+    def save_checkpoint_online(self, save_path, state, is_best, train_url):
+        ''' 保存模型参数
+        Args:
+            save_path: str, 要保存的权重路径
+            state: dict, 存有模型参数、最大dice等信息的字典
+            is_best: bool, 是否为最优模型
+            train_url: str, 远程路径
+        Return:
+            None
+        '''
+        torch.save(state, save_path)
+        mox.file.copy(save_path, train_url + '/' + os.path.basename(save_path))
+
+        if is_best:
+            print('Saving Best Model.')
+            # mox.file可兼容处理本地路径和OBS路径
+            if not mox.file.exists(os.path.join(train_url, 'model')):
+                mox.file.mk_dir(os.path.join(train_url, 'model'))
+            mox.file.copy(save_path, os.path.join(train_url, 'model/model_best.pth'))
     
     def load_checkpoint(self, load_path):
         ''' 保存模型参数

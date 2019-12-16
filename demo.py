@@ -24,7 +24,7 @@ class DemoResults(object):
             mean: tuple，各个通道的均值
             std: tuple，各个通道的方差
         """
-        self.dataset_root = config.dataset_root
+        self.data_url = config.data_url
         self.model_type = config.model_type
         self.classes_num = config.num_classes
         self.drop_rate = config.drop_rate
@@ -48,7 +48,7 @@ class DemoResults(object):
         with torch.no_grad():
             for i, (image_names, _, _) in enumerate(tbar):
                 for image_name in image_names:
-                    sample_path = os.path.join(self.dataset_root, image_name)
+                    sample_path = os.path.join(self.data_url, image_name)
                     self.predict_single_sample(sample_path, rank, show, save, save_path)
 
     def predict_single_sample(self, sample_path, rank=1, show=False, save=False, save_path=''):
@@ -137,7 +137,7 @@ class DemoResults(object):
 if __name__ == "__main__":
     config = get_classify_config()
     model_type = config.model_type
-    data_root = config.dataset_root
+    data_root = config.data_url
     folds_split = config.n_splits
     test_size = config.val_size
     mean = (0.485, 0.456, 0.406)
