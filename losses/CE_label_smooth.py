@@ -63,3 +63,13 @@ class CrossEntropyLabelSmooth(nn.Module):
         # mean(0)表示缩减第0维，也就是按列求均值，得到维度为[num_classes]，得到该batch内每一个类别的损失，再求和
         loss = (- targets * log_probs).mean(0).sum()
         return loss
+
+
+if __name__ == '__main__':
+    num_of_classes = 5
+    logits = torch.rand(10, num_of_classes).float()
+    labels = torch.randint(0, num_of_classes, size=(10,))
+
+    my_CB_loss = CrossEntropyLabelSmooth(num_of_classes, alpha=[1 for x in range(num_of_classes)], use_gpu=False)
+    cb_loss = my_CB_loss(logits, labels)
+    print(cb_loss)

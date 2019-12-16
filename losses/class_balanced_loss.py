@@ -49,6 +49,48 @@ def focal_loss(labels, logits, alpha, gamma):
     return focal_loss
 
 
+def smooth_CrossEntropy(inputs, targets, num_classes, epsilon=0.1, alpha=None, use_gpu=True):
+    """Cross entropy loss with label smoothing regularizer.
+
+    Reference:
+    Szegedy et al. Rethinking the Inception Architecture for Computer Vision. CVPR 2016.
+    Equation: q_i = (1 - epsilon) * a_i + epsilon / N.
+
+    Args:
+        inputs: prediction matrix (before softmax) with shape (batch_size, num_classes)
+        targets: ground truth labels with shape (num_classes)
+        num_classes: int, 类别总数
+        epsilon: float, 系数
+        alpha: list, float or list, 类别的权重
+        use_gpu: bool, 是否使用gpu
+    """
+
+    if isinstance(alpha, (float, int)):
+        alpha = torch.FloatTensor([alpha, 1-alpha])
+    if isinstance(alpha, list):
+        alpha = torch.FloatTensor(alpha)
+
+    log_probs = nn.LogSoftmax(dim=1)(inputs)
+
+    if alpha is not None:
+        if alpha.type() != inputs.data.type():
+            alpha = alpha.type_as(inputs.data)
+        log_probs = log_probs * alpha
+
+    '''
+    scatter_第一个参数为1表示分别对每行填充；targets.unsqueeze(1)得到的维度为[num_classes, 1]；
+    填充方法为：取出targets的第i行中的第一个元素（每行只有一个元素），记该值为j；则前面tensor中的(i,j)元素填充1；
+    最终targets的维度为[batch_size, num_classes]，每一行代表一个样本，若该样本类别为j，则只有第j元素为1，其余元素为0
+    '''
+    targets = torch.zeros(log_probs.size()).scatter_(1, targets.unsqueeze(1).data.cpu(), 1)
+    if use_gpu:
+        targets = targets.cuda()
+    targets = (1 - epsilon) * targets + epsilon / num_classes
+    # mean(0)表示缩减第0维，也就是按列求均值，得到维度为[num_classes]，得到该batch内每一个类别的损失，再求和
+    loss = (- targets * log_probs).mean(0).sum()
+    return loss
+
+
 class CB_Loss(nn.Module):
     def __init__(self, samples_per_class, num_of_classes, loss_type, beta, gamma):
         super(CB_Loss, self).__init__()
@@ -80,14 +122,14 @@ class CB_Loss(nn.Module):
     def forward(self, inputs, targets):
         """
         Args:
-            inputs: A int tensor of size [batch].
-            targets: A float tensor of size [batch, num_of_classes].
+            inputs: A int tensor of size [batch, num_of_classes].
+            targets: A float tensor of size [batch].
 
         Returns:
           cb_loss: A float tensor representing class balanced loss
         """
         labels_one_hot = F.one_hot(targets, self.num_of_classes).float()
-        # after repeat, dim [batch_size, num_of_classes], 相乘后只有真实类标对应的位置有值
+        # after repeat, dim [batch_size, num_of_classes]; 相乘后只有真实类标对应的位置有值
         weights = self.weights.repeat(labels_one_hot.shape[0], 1).to(labels_one_hot.device) * labels_one_hot
         # dim [batch_size]
         weights = weights.sum(1)
@@ -103,6 +145,8 @@ class CB_Loss(nn.Module):
         elif self.loss_type == "CB_Softmax":
             pred = inputs.softmax(dim=1)
             cb_loss = F.binary_cross_entropy(input=pred, target=labels_one_hot, weight=weights)
+        elif self.loss_type == 'CB_Smooth_Softmax':
+            cb_loss = smooth_CrossEntropy(inputs, targets, num_classes = num_of_classes, alpha=weights)
         else:
             assert NotImplementedError
         return cb_loss
@@ -151,6 +195,8 @@ def CB_loss_function(labels, logits, samples_per_cls, num_of_classes, loss_type,
     elif loss_type == "CB_Softmax":
         pred = logits.softmax(dim=1)
         cb_loss = F.binary_cross_entropy(input=pred, target=labels_one_hot, weight=weights)
+    elif loss_type == 'CB_Smooth_Softmax':
+        cb_loss = smooth_CrossEntropy(logits, labels, num_classes=num_of_classes, alpha=weights)
     else:
         assert NotImplementedError
     return cb_loss
@@ -163,7 +209,7 @@ if __name__ == '__main__':
     beta = 0.9999
     gamma = 2.0
     samples_per_cls = [2, 3, 1, 2, 2]
-    loss_type = "CB_Softmax"
+    loss_type = "CB_Smooth_Softmax"
     cb_loss = CB_loss_function(labels, logits, samples_per_cls, num_of_classes, loss_type, beta, gamma)
     print(cb_loss)
 

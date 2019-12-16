@@ -29,7 +29,7 @@ class Loss(nn.Module):
                 loss_function = CrossEntropyLabelSmooth(num_classes=num_classes)
             elif loss_type == 'FocalLoss':
                 loss_function = MultiFocalLoss(gamma=gamma)
-            elif loss_type in ['CB_Focal', 'CB_Sigmoid', 'CB_Softmax']:
+            elif loss_type in ['CB_Focal', 'CB_Sigmoid', 'CB_Softmax', 'CB_Smooth_Softmax']:
                 loss_function = CB_Loss(samples_per_class, num_classes, loss_type, beta, gamma)
             else:
                 assert "loss: {} not support yet".format(self.loss_name)
@@ -63,7 +63,7 @@ class Loss(nn.Module):
         losses = []
         # 计算每一个损失函数的损失值
         for i, l in enumerate(self.loss_struct):
-            if l['type'] in ['CrossEntropy', 'SmoothCrossEntropy', 'FocalLoss', 'CB_Focal', 'CB_Sigmoid', 'CB_Softmax']:
+            if l['type'] in ['CrossEntropy', 'SmoothCrossEntropy', 'FocalLoss', 'CB_Focal', 'CB_Sigmoid', 'CB_Softmax', 'CB_Smooth_Softmax']:
                 loss = l['function'](outputs, labels)
                 effective_loss = l['weight'] * loss
                 losses.append(effective_loss)
