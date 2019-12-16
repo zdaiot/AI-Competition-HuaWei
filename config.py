@@ -67,7 +67,7 @@ def get_classify_config():
     # 优化器
     parser.add_argument('--optimizer', type=str, default='Adam', help='optimizer type')
     # 损失函数
-    parser.add_argument('--loss_name', type=str, default='1.0*CB_Softmax',
+    parser.add_argument('--loss_name', type=str, default='1.0*CB_Smooth_Softmax',
         help='loss name, CrossEntropy/SmoothCrossEntropy/FocalLoss/CB_Sigmoid/CB_Focal/CB_Softmax/CB_Smooth_Softmax')
     parser.add_argument('--beta_CB', type=float, default=0.9999, help='Hyperparameter for Class balanced loss.')
     parser.add_argument('--gamma', type=float, default=2, help='Hyperparameter for Focal loss.')

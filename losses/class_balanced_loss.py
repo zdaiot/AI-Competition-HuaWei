@@ -146,7 +146,7 @@ class CB_Loss(nn.Module):
             pred = inputs.softmax(dim=1)
             cb_loss = F.binary_cross_entropy(input=pred, target=labels_one_hot, weight=weights)
         elif self.loss_type == 'CB_Smooth_Softmax':
-            cb_loss = smooth_CrossEntropy(inputs, targets, num_classes = num_of_classes, alpha=weights)
+            cb_loss = smooth_CrossEntropy(inputs, targets, num_classes=self.num_of_classes, alpha=weights)
         else:
             assert NotImplementedError
         return cb_loss
