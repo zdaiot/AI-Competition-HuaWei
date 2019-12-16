@@ -210,10 +210,6 @@ class TrainVal:
                 self.exp_lr_scheduler.step()
             global_step += len(train_loader)
         print('BEST ACC:{}'.format(self.max_accuracy_valid))
-        source_path = os.path.join(self.model_path, 'model_best.pth')
-        target_path = os.path.join(self.config.save_path, self.config.model_type, 'backup', 'model_best.pth')
-        print('Copy %s to %s' % (source_path, target_path))
-        shutil.copy(source_path, target_path)
 
     def validation(self, valid_loader):
         tbar = tqdm.tqdm(valid_loader)
