@@ -25,11 +25,12 @@ from datasets.create_dataset import multi_scale_transforms
 
 
 class TrainVal:
-    def __init__(self, config, fold):
+    def __init__(self, config, fold, train_labels_number):
         """
         Args:
             config: 配置参数
-            fold: 当前为第几折
+            fold: int, 当前为第几折
+            train_labels_number: list, 某一折的[number_class0, number__class1, ...]
         """
         self.config = config
         self.fold = fold
@@ -59,8 +60,6 @@ class TrainVal:
             drop_rate=config.drop_rate,
             pretrained=True
         )
-        if config.weight_path:
-            self.model = prepare_model.load_chekpoint(self.model, config.weight_path)
         if torch.cuda.is_available():
             self.model = torch.nn.DataParallel(self.model)
             self.model = self.model.cuda()
@@ -78,11 +77,20 @@ class TrainVal:
         )
 
         # 加载损失函数
-        self.criterion = Loss(config.model_type, config.loss_name, self.num_classes)
+        self.criterion = Loss(config.model_type, config.loss_name, self.num_classes, train_labels_number, config.beta_CB, config.gamma)
 
         # 实例化实现各种子函数的 solver 类
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.solver = Solver(self.model, self.device)
+        if config.restore:
+            weight_path = os.path.join('checkpoints', config.model_type)
+            if config.restore == 'last':
+                lists = os.listdir(weight_path)  # 获得文件夹内所有文件
+                lists.sort(key=lambda fn: os.path.getmtime(weight_path + '/' + fn))  # 按照最近修改时间排序
+                weight_path = os.path.join(weight_path, lists[-1], 'model_best.pth')
+            else:
+                weight_path = os.path.join(weight_path, config.restore, 'model_best.pth')
+            self.solver.load_checkpoint(weight_path)
 
         # log初始化
         self.writer, self.time_stamp = self.init_log()
@@ -275,8 +283,6 @@ if __name__ == "__main__":
     data_root = config.dataset_root
     folds_split = config.n_splits
     test_size = config.val_size
-    only_self = config.only_self
-    only_official = config.only_official
     multi_scale = config.multi_scale
     mean = (0.485, 0.456, 0.406)
     std = (0.229, 0.224, 0.225)
@@ -284,11 +290,17 @@ if __name__ == "__main__":
         transforms = DataAugmentation(config.erase_prob, full_aug=True, gray_prob=config.gray_prob)
     else:
         transforms = None
-    get_dataloader = GetDataloader(data_root, folds_split=folds_split, test_size=test_size, only_self=only_self, only_official=only_official)
-    train_dataloaders, val_dataloaders = get_dataloader.get_dataloader(config.batch_size, config.image_size, mean, std,
-                                                                       transforms=transforms, multi_scale=multi_scale)
+    get_dataloader = GetDataloader(data_root, folds_split=folds_split, test_size=test_size, choose_dataset=config.choose_dataset)
 
-    for fold_index, [train_loader, valid_loader] in enumerate(zip(train_dataloaders, val_dataloaders)):
+    train_dataloaders, val_dataloaders, train_labels_number_folds, _ = get_dataloader.get_dataloader(
+        config.batch_size,
+        config.image_size,
+        mean, std,
+        transforms=transforms,
+        multi_scale=multi_scale
+    )
+
+    for fold_index, [train_loader, valid_loader, train_labels_number] in enumerate(zip(train_dataloaders, val_dataloaders, train_labels_number_folds)):
         if fold_index in config.selected_fold:
-            train_val = TrainVal(config, fold_index)
+            train_val = TrainVal(config, fold_index, train_labels_number)
             train_val.train(train_loader, valid_loader)

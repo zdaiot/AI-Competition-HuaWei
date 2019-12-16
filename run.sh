@@ -1,2 +1,3 @@
-python train_classifier.py --epoch=1 --only_self=True --only_official=False --lr=3e-4
-python train_classifier.py --epoch=6 --weight_path=checkpoints/se_resnext101_32x4d/backup/model_best.pth --only_self=False --only_official=True --lr=2e-5
+python train_classifier.py --image_size 224 224
+python train_classifier.py --image_size 300 300 --restore last --lr 3e-5 --epoch 20 --lr_step_size 13
+python train_classifier.py --image_size 416 416 --restore last --lr 3e-6 --epoch 10 --lr_step_size 7 --batch_size 16

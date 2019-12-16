@@ -2,15 +2,19 @@ import torch
 import torch.nn as nn
 from losses.CE_label_smooth import CrossEntropyLabelSmooth
 from losses.focal_loss import MultiFocalLoss
+from losses.class_balanced_loss import CB_Loss
 
 
 class Loss(nn.Module):
-    def __init__(self, model_name, loss_name, num_classes):
+    def __init__(self, model_name, loss_name, num_classes, samples_per_class, beta, gamma):
         """
 
         :param model_name: 模型的名称；类型为str
         :param loss_name: 损失的名称；类型为str
-        :param num_classes: 网络的参数
+        :param num_classes: 有多少类数据; int
+        :param samples_per_class: A python list of size [num_of_classes].
+        :param beta: float. Hyperparameter for Class balanced loss.
+        :param gamma: float. Hyperparameter for Focal loss.
         """
         super(Loss, self).__init__()
         self.model_name = model_name
@@ -24,7 +28,9 @@ class Loss(nn.Module):
             elif loss_type == 'SmoothCrossEntropy':
                 loss_function = CrossEntropyLabelSmooth(num_classes=num_classes)
             elif loss_type == 'FocalLoss':
-                loss_function = MultiFocalLoss(gamma=2)
+                loss_function = MultiFocalLoss(gamma=gamma)
+            elif loss_type in ['CB_Focal', 'CB_Sigmoid', 'CB_Softmax']:
+                loss_function = CB_Loss(samples_per_class, num_classes, loss_type, beta, gamma)
             else:
                 assert "loss: {} not support yet".format(self.loss_name)
 
@@ -57,7 +63,7 @@ class Loss(nn.Module):
         losses = []
         # 计算每一个损失函数的损失值
         for i, l in enumerate(self.loss_struct):
-            if l['type'] in ['CrossEntropy', 'SmoothCrossEntropy', 'FocalLoss']:
+            if l['type'] in ['CrossEntropy', 'SmoothCrossEntropy', 'FocalLoss', 'CB_Focal', 'CB_Sigmoid', 'CB_Softmax']:
                 loss = l['function'](outputs, labels)
                 effective_loss = l['weight'] * loss
                 losses.append(effective_loss)

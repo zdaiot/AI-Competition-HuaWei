@@ -8,10 +8,11 @@ from matplotlib.font_manager import FontProperties
 from sklearn.model_selection import train_test_split, StratifiedKFold
 from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as T
+import collections
 
 
 class TrainDataset(Dataset):
-    def __init__(self, data_root, sample_list, label_list, size, mean, std, transforms=None, only_self=False, only_official=False, multi_scale=False):
+    def __init__(self, data_root, sample_list, label_list, size, mean, std, transforms=None, choose_dataset='combine', multi_scale=False):
         """
         Args:
             data_root: str, 数据集根目录
@@ -26,26 +27,24 @@ class TrainDataset(Dataset):
         self.data_root = data_root
         self.sample_list = sample_list
         self.label_list = label_list
-        if only_self and only_official:
-            raise ValueError('only_self, only_official should not be the same.')
-        if only_official:
+        self.choose_dataset = choose_dataset
+
+        if self.choose_dataset == 'combine':
+            pass
+        else:
             sample_list = []
             label_list = []
             for sample, label in zip(self.sample_list, self.label_list):
-                if 'img' in sample:
-                    sample_list.append(sample)
-                    label_list.append(label)
+                if self.choose_dataset == 'only_self':
+                    if 'img' in sample:
+                        sample_list.append(sample)
+                        label_list.append(label)
+                elif self.choose_dataset == 'only_official':
+                    if 'img' not in sample:
+                        sample_list.append(sample)
+                        label_list.append(label)
             self.sample_list = sample_list
-            self.label_list = label_list
-        if only_self:
-            sample_list = []
-            label_list = []
-            for sample, label in zip(self.sample_list, self.label_list):
-                if 'img' not in sample:
-                    sample_list.append(sample)
-                    label_list.append(label)
-            self.sample_list = sample_list
-            self.label_list = label_list            
+            self.label_list = label_list        
         
         self.size = size
         self.mean = mean
@@ -93,7 +92,7 @@ class TrainDataset(Dataset):
     
 
 class ValDataset(Dataset):
-    def __init__(self, data_root, sample_list, label_list, size, mean, std, only_self=False, only_official=False, multi_scale=False):
+    def __init__(self, data_root, sample_list, label_list, size, mean, std, choose_dataset='combine', multi_scale=False):
         """
         Args:
             data_root: str, 数据集根目录
@@ -107,26 +106,25 @@ class ValDataset(Dataset):
         self.data_root = data_root
         self.sample_list = sample_list
         self.label_list = label_list
-        if only_self and only_official:
-            raise ValueError('only_self, only_official should not be the same.')       
-        if only_official:
+        self.choose_dataset = choose_dataset
+
+        if self.choose_dataset == 'combine':
+            pass
+        else:
             sample_list = []
             label_list = []
             for sample, label in zip(self.sample_list, self.label_list):
-                if 'img' in sample:
-                    sample_list.append(sample)
-                    label_list.append(label)
+                if self.choose_dataset == 'only_self':
+                    if 'img' in sample:
+                        sample_list.append(sample)
+                        label_list.append(label)
+                elif self.choose_dataset == 'only_official':
+                    if 'img' not in sample:
+                        sample_list.append(sample)
+                        label_list.append(label)
             self.sample_list = sample_list
-            self.label_list = label_list  
-        if only_self:
-            sample_list = []
-            label_list = []
-            for sample, label in zip(self.sample_list, self.label_list):
-                if 'img' not in sample:
-                    sample_list.append(sample)
-                    label_list.append(label)
-            self.sample_list = sample_list
-            self.label_list = label_list              
+            self.label_list = label_list        
+
         self.size = size
         self.mean = mean
         self.std = std
@@ -168,7 +166,7 @@ class ValDataset(Dataset):
 
 
 class GetDataloader(object):
-    def __init__(self, data_root, folds_split=1, test_size=None, label_names_path='data/huawei_data/label_id_name.json', only_self=False, only_official=False):
+    def __init__(self, data_root, folds_split=1, test_size=None, label_names_path='data/huawei_data/label_id_name.json', choose_dataset='combine'):
         """
         Args:
             data_root: str, 数据集根目录
@@ -179,10 +177,10 @@ class GetDataloader(object):
         self.folds_split = folds_split
         self.samples, self.labels = self.get_samples_labels()
         self.test_size = test_size
-        self.only_self = only_self
-        self.only_official = only_official
+        self.choose_dataset = choose_dataset
         with open(label_names_path, 'r') as f:
             self.label_to_name = json.load(f)
+            self.name_to_label = {v: k for k, v in self.label_to_name.items()}
 
         if folds_split == 1:
             if not test_size:
@@ -200,10 +198,12 @@ class GetDataloader(object):
         Return:
             train_dataloader_folds: list, [train_dataloader_0, train_dataloader_1,...]
             valid_dataloader_folds: list, [val_dataloader_0, val_dataloader_1, ...]
+            train_labels_number_fold: list, list中每一个数据均为list类型，表示某一折的[number_class0, number__class1, ...]
+            val_labels_number_folds: list, list中每一个数据均为list类型，表示某一折的[number_class0, number__class1, ...]
         """
         train_lists, val_lists = self.get_split()
         train_dataloader_folds, valid_dataloader_folds = list(), list()
-        self.draw_train_val_distribution(train_lists, val_lists)
+        train_labels_number_folds, val_labels_number_folds = self.draw_train_val_distribution(train_lists, val_lists)
 
         for train_list, val_list in zip(train_lists, val_lists):
             train_dataset = TrainDataset(
@@ -214,8 +214,7 @@ class GetDataloader(object):
                 transforms=transforms, 
                 mean=mean, 
                 std=std, 
-                only_self=self.only_self, 
-                only_official=self.only_official, 
+                choose_dataset=self.choose_dataset, 
                 multi_scale=multi_scale
                 )
             # 默认不在验证集上进行多尺度
@@ -226,8 +225,7 @@ class GetDataloader(object):
                 image_size, 
                 mean=mean, 
                 std=std, 
-                only_self=self.only_self, 
-                only_official=self.only_official, 
+                choose_dataset=self.choose_dataset, 
                 multi_scale=False
                 )
 
@@ -247,7 +245,7 @@ class GetDataloader(object):
             )
             train_dataloader_folds.append(train_dataloader)
             valid_dataloader_folds.append(val_dataloader)
-        return train_dataloader_folds, valid_dataloader_folds
+        return train_dataloader_folds, valid_dataloader_folds, train_labels_number_folds, val_labels_number_folds
 
     def draw_train_val_distribution(self, train_lists, val_lists):
         """ 画出各个折的训练集与验证集的数据分布
@@ -255,7 +253,11 @@ class GetDataloader(object):
         Args:
             train_lists: list, 每一个数据均为[train_sample, train_label], train_sample: list, 样本名称， train_label: list, 样本类标
             val_lists: list, 每一个数据均为[val_sample, val_label]， val_sample: list, 样本名称， val_label: list, 样本类标
+        Returns:
+            train_labels_number_fold: list, list中每一个数据均为list类型，表示某一折的[number_class0, number__class1, ...]
+            val_labels_number_folds: list, list中每一个数据均为list类型，表示某一折的[number_class0, number__class1, ...]
         """
+        train_labels_number_folds, val_labels_number_folds = [], []
         for index, (train_list, val_list) in enumerate(zip(train_lists, val_lists)):
             train_labels_number = {}
             for label in train_list[1]:
@@ -264,6 +266,8 @@ class GetDataloader(object):
                 else:
                     train_labels_number[label] = 1
             self.draw_labels_number(train_labels_number, phase='Train_%s' % index)
+            train_labels_number_folds.append(list(collections.OrderedDict(sorted(train_labels_number.items())).values()))
+
             val_labels_number = {}
             for label in val_list[1]:
                 if label in val_labels_number.keys():
@@ -271,6 +275,8 @@ class GetDataloader(object):
                 else:
                     val_labels_number[label] = 1
             self.draw_labels_number(val_labels_number, phase='Val_%s' % index)
+            val_labels_number_folds.append(list(collections.OrderedDict(sorted(val_labels_number.items())).values()))
+        return train_labels_number_folds, val_labels_number_folds
 
     def draw_labels_number(self, labels_number, phase='Train'):
         """ 画图函数
@@ -359,8 +365,12 @@ class GetDataloader(object):
             annotation_file_path = os.path.join(self.data_root, annotation_file)
             with open(annotation_file_path, encoding='utf-8-sig') as f:
                 for sample_label in f:
-                    sample_name = sample_label.split(', ')[0]
-                    label = int(sample_label.split(', ')[1])
+                    try:
+                        sample_name = sample_label.split(', ')[0]
+                        label = int(sample_label.split(', ')[1])
+                    except:
+                        sample_name = sample_label.split(',')[0]
+                        label = int(sample_label.split(',')[1])
                     samples.append(sample_name)
                     labels.append(label)
         return samples, labels
@@ -393,4 +403,3 @@ if __name__ == "__main__":
     train_dataset = TrainDataset(data_root, train_list[0], train_list[1], size=[224, 224], mean=mean, std=std)
     for i in range(len(train_dataset)):
         image, label = train_dataset[i]
-    pass
