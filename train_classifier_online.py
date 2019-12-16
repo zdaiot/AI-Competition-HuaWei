@@ -7,7 +7,7 @@ import time
 import numpy as np
 import random
 import torch.nn.functional as F
-from torch.utils.tensorboard import SummaryWriter
+from tensorboardX import SummaryWriter
 import json
 import codecs
 try:
@@ -39,6 +39,12 @@ def prepare_data_on_modelarts(args):
     else:
         print('args.data_local: %s is already exist, skip copy' % args.data_local)
 
+    # 复制json文件
+    mox.file.copy('s3://combine-zdaiot/label_id_name.json', args.local_data_root+'label_id_name.json')
+    mox.file.copy_parallel('s3://combine-zdaiot/AI-Competition-HuaWei/font', os.path.join(args.local_data_root, 'font'))
+    mox.file.copy_parallel('s3://combine-zdaiot/AI-Competition-HuaWei/online-service/model/',
+                           os.path.join(args.local_data_root, 'online-service/model/'))
+
     # train_local: 用于训练过程中保存的输出位置，而train_url用于移动到OBS的位置
     args.train_local = os.path.join(args.local_data_root, 'model_snapshots')
     if not os.path.exists(args.train_local):
@@ -64,10 +70,11 @@ class TrainVal:
         self.epoch = config.epoch
         self.num_classes = config.num_classes
         self.lr_scheduler = config.lr_scheduler
-        self.save_interval = 10
+        self.save_interval = 100
         self.cut_mix = config.cut_mix
         self.beta = config.beta
         self.cutmix_prob = config.cutmix_prob
+        self.train_url = config.train_url
 
         self.image_size = config.image_size
         self.multi_scale = config.multi_scale
@@ -79,20 +86,16 @@ class TrainVal:
             print('Using multi scale training.')
         print('USE LOSS: {}'.format(config.loss_name))
 
-        config = prepare_data_on_modelarts(config)
-        self.train_url = config.train_url
-
         # 拷贝预训练权重
         print("=> using pre-trained model '{}'".format(config.model_type))
-        os.environ['TORCH_MODEL_ZOO'] = '../pre-trained_model/pytorch'
-        if not mox.file.exists('../pre-trained_model/pytorch/se_resnext101_32x4d-3b2fe3d8.pth'):
+        if not mox.file.exists('/home/work/.torch/models/se_resnext101_32x4d-3b2fe3d8.pth'):
             mox.file.copy('s3://combine-zdaiot/model_zoo/se_resnext101_32x4d-3b2fe3d8.pth',
-                          '../pre-trained_model/pytorch/se_resnext101_32x4d-3b2fe3d8.pth')
+                          '/home/work/.torch/models/se_resnext101_32x4d-3b2fe3d8.pth')
             print('copy pre-trained model from OBS to: %s success' %
-                  (os.path.abspath('../pre-trained_model/pytorch/se_resnext101_32x4d-3b2fe3d8.pth')))
+                  (os.path.abspath('/home/work/.torch/models/se_resnext101_32x4d-3b2fe3d8.pth')))
         else:
             print('use exist pre-trained model at: %s' %
-                  (os.path.abspath('../pre-trained_model/pytorch/se_resnext101_32x4d-3b2fe3d8.pth')))
+                  (os.path.abspath('/home/work/.torch/models/se_resnext101_32x4d-3b2fe3d8.pth')))
 
         # 加载模型
         prepare_model = PrepareModel()
@@ -102,9 +105,7 @@ class TrainVal:
             drop_rate=config.drop_rate,
             pretrained=True
         )
-        if torch.cuda.is_available():
-            self.model = torch.nn.DataParallel(self.model)
-            self.model = self.model.cuda()
+        self.model = torch.nn.DataParallel(self.model).cuda()
 
         # 加载优化器
         self.optimizer = prepare_model.create_optimizer(config.model_type, self.model, config)
@@ -139,7 +140,7 @@ class TrainVal:
         self.model_path = os.path.join(self.config.train_local, self.config.model_type, self.time_stamp)
 
         # 初始化分类度量准则类
-        with open("online-service/model/label_id_name.json", 'r', encoding='utf-8') as json_file:
+        with open(config.local_data_root+'label_id_name.json', 'r', encoding='utf-8') as json_file:
             self.class_names = list(json.load(json_file).values())
         self.classification_metric = ClassificationMetric(self.class_names, self.model_path)
 
@@ -293,7 +294,8 @@ class TrainVal:
                     acc_for_each_class,
                     oa,
                     average_accuracy,
-                    kappa
+                    kappa,
+                    font_fname="../font/simhei.ttf"
                 )
             else:
                 is_best = False
@@ -320,24 +322,35 @@ class TrainVal:
 
 if __name__ == "__main__":
     config = get_classify_config()
-    data_root = config.data_local
+    data_root = config.data_url
     folds_split = config.n_splits
     test_size = config.val_size
     multi_scale = config.multi_scale
     mean = (0.485, 0.456, 0.406)
     std = (0.229, 0.224, 0.225)
+
+    config = prepare_data_on_modelarts(config)
+
     if config.augmentation_flag:
         transforms = DataAugmentation(config.erase_prob, full_aug=True, gray_prob=config.gray_prob)
     else:
         transforms = None
-    get_dataloader = GetDataloader(data_root, folds_split=folds_split, test_size=test_size, choose_dataset=config.choose_dataset)
+
+    get_dataloader = GetDataloader(
+        config.data_local,
+        folds_split=folds_split,
+        test_size=test_size,
+        label_names_path=config.local_data_root+'label_id_name.json',
+        choose_dataset=config.choose_dataset
+    )
 
     train_dataloaders, val_dataloaders, train_labels_number_folds, _ = get_dataloader.get_dataloader(
         config.batch_size,
         config.image_size,
         mean, std,
         transforms=transforms,
-        multi_scale=multi_scale
+        multi_scale=multi_scale,
+        draw_distribution=False
     )
 
     for fold_index, [train_loader, valid_loader, train_labels_number] in enumerate(zip(train_dataloaders, val_dataloaders, train_labels_number_folds)):

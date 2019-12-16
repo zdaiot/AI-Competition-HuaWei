@@ -4,6 +4,7 @@ import json
 import numpy as np
 from PIL import Image
 import matplotlib.pylab as plt
+plt.switch_backend('agg')
 from matplotlib.font_manager import FontProperties
 from sklearn.model_selection import train_test_split, StratifiedKFold
 from torch.utils.data import Dataset, DataLoader
@@ -186,7 +187,7 @@ class GetDataloader(object):
             if not test_size:
                 raise ValueError('You must specified test_size when folds_split equal to 1.')
     
-    def get_dataloader(self, batch_size, image_size, mean, std, transforms=None, multi_scale=False):
+    def get_dataloader(self, batch_size, image_size, mean, std, transforms=None, multi_scale=False, draw_distribution=True):
         """得到数据加载器
         Args:
             batch_size: int, 批量大小
@@ -194,7 +195,8 @@ class GetDataloader(object):
             mean: tuple, 通道均值
             std: tuple, 通道方差
             transforms: callable, 数据增强方式
-            multi_scale: 是否使用多尺度训练
+            multi_scale: bool, 是否使用多尺度训练
+            draw_distribution: bool, 是否画出分布图
         Return:
             train_dataloader_folds: list, [train_dataloader_0, train_dataloader_1,...]
             valid_dataloader_folds: list, [val_dataloader_0, val_dataloader_1, ...]
@@ -203,7 +205,7 @@ class GetDataloader(object):
         """
         train_lists, val_lists = self.get_split()
         train_dataloader_folds, valid_dataloader_folds = list(), list()
-        train_labels_number_folds, val_labels_number_folds = self.draw_train_val_distribution(train_lists, val_lists)
+        train_labels_number_folds, val_labels_number_folds = self.draw_train_val_distribution(train_lists, val_lists, draw_distribution)
 
         for train_list, val_list in zip(train_lists, val_lists):
             train_dataset = TrainDataset(
@@ -247,12 +249,13 @@ class GetDataloader(object):
             valid_dataloader_folds.append(val_dataloader)
         return train_dataloader_folds, valid_dataloader_folds, train_labels_number_folds, val_labels_number_folds
 
-    def draw_train_val_distribution(self, train_lists, val_lists):
+    def draw_train_val_distribution(self, train_lists, val_lists, draw_distribution):
         """ 画出各个折的训练集与验证集的数据分布
 
         Args:
             train_lists: list, 每一个数据均为[train_sample, train_label], train_sample: list, 样本名称， train_label: list, 样本类标
             val_lists: list, 每一个数据均为[val_sample, val_label]， val_sample: list, 样本名称， val_label: list, 样本类标
+            draw_distribution: bool, 是否画出分布图
         Returns:
             train_labels_number_fold: list, list中每一个数据均为list类型，表示某一折的[number_class0, number__class1, ...]
             val_labels_number_folds: list, list中每一个数据均为list类型，表示某一折的[number_class0, number__class1, ...]
@@ -265,7 +268,8 @@ class GetDataloader(object):
                     train_labels_number[label] += 1
                 else:
                     train_labels_number[label] = 1
-            self.draw_labels_number(train_labels_number, phase='Train_%s' % index)
+            if draw_distribution:
+                self.draw_labels_number(train_labels_number, phase='Train_%s' % index)
             train_labels_number_folds.append(list(collections.OrderedDict(sorted(train_labels_number.items())).values()))
 
             val_labels_number = {}
@@ -274,7 +278,8 @@ class GetDataloader(object):
                     val_labels_number[label] += 1
                 else:
                     val_labels_number[label] = 1
-            self.draw_labels_number(val_labels_number, phase='Val_%s' % index)
+            if draw_distribution:
+                self.draw_labels_number(val_labels_number, phase='Val_%s' % index)
             val_labels_number_folds.append(list(collections.OrderedDict(sorted(val_labels_number.items())).values()))
         return train_labels_number_folds, val_labels_number_folds
 

@@ -3,6 +3,7 @@ import os
 import codecs
 import numpy as np
 import matplotlib.pyplot as plt
+plt.switch_backend('agg')
 import matplotlib as mpl
 from matplotlib.font_manager import FontProperties
 from sklearn.metrics import confusion_matrix, cohen_kappa_score, accuracy_score, precision_score, classification_report
@@ -56,7 +57,7 @@ class ClassificationMetric:
         return classify_report, my_confusion_matrix, acc_for_each_class, oa, average_accuracy, kappa
 
     def draw_cm_and_save_result(self, classify_report, my_confusion_matrix, acc_for_each_class, oa, average_accuracy,
-                                kappa):
+                                kappa, font_fname="./font/simhei.ttf"):
         """ 画混淆矩阵并根据self.save_result的值决定是否保存最后结果
 
         :param classify_report: 分类报告；类型为string / dict
@@ -65,6 +66,7 @@ class ClassificationMetric:
         :param oa: 微平均（是对数据集中的每一个实例不分类别进行统计建立全局混淆矩阵，然后计算相应指标）；类型为float
         :param average_accuracy: 宏平均（先对每一个类统计指标值，然后在对所有类求算术平均值）；类型为float
         :param kappa: Kappa系数；类型为float
+        :param font_fname: str; 字体的路径
         """
 
         np.set_printoptions(precision=2)
@@ -106,7 +108,7 @@ class ClassificationMetric:
         plt.title('Confusion Matrix')
         plt.colorbar()
         xlocations = np.array(range(len(self.labels)))
-        font = FontProperties(fname=r"font/simhei.ttf", size=7)
+        font = FontProperties(fname=font_fname, size=7)
         plt.xticks(xlocations, self.labels, fontproperties=font, rotation=90)
         plt.yticks(xlocations, self.labels, fontproperties=font, rotation=0)
         plt.ylabel('Index of True Classes')

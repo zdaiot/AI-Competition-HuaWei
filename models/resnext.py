@@ -7,7 +7,10 @@
 # Optional list of dependencies required by the package
 dependencies = ['torch', 'torchvision']
 import torch.nn as nn
-from torch.hub import load_state_dict_from_url
+try:
+    from torch.hub import load_state_dict_from_url
+except ImportError:
+    from torch.utils.model_zoo import load_url as load_state_dict_from_url
 from torchvision.models.resnet import ResNet, Bottleneck
 
 # available model name

@@ -128,7 +128,7 @@ class CB_Loss(nn.Module):
         Returns:
           cb_loss: A float tensor representing class balanced loss
         """
-        labels_one_hot = F.one_hot(targets, self.num_of_classes).float()
+        labels_one_hot = torch.zeros(targets.size(0), self.num_of_classes).to(targets.device).scatter_(1, targets.unsqueeze(1), 1).float()
         # after repeat, dim [batch_size, num_of_classes]; 相乘后只有真实类标对应的位置有值
         weights = self.weights.repeat(labels_one_hot.shape[0], 1).to(labels_one_hot.device) * labels_one_hot
         # dim [batch_size]
@@ -175,7 +175,7 @@ def CB_loss_function(labels, logits, samples_per_cls, num_of_classes, loss_type,
     # Normalization operation
     weights = weights / np.sum(weights) * num_of_classes
 
-    labels_one_hot = F.one_hot(labels, num_of_classes).float()
+    labels_one_hot = torch.zeros(labels.size(0), num_of_classes).scatter_(1, labels.unsqueeze(1), 1).float()
 
     weights = torch.tensor(weights).float()
     weights = weights.unsqueeze(0)

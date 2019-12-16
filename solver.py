@@ -106,14 +106,19 @@ class Solver:
             None
         '''
         torch.save(state, save_path)
-        mox.file.copy(save_path, train_url + '/' + os.path.basename(save_path))
 
         if is_best:
             print('Saving Best Model.')
+            save_best_path = '/'.join(save_path.split('/')[:-1] + ['model_best.pth'])
+            shutil.copyfile(save_path, save_best_path)
+            os.remove(save_path)
+
             # mox.file可兼容处理本地路径和OBS路径
-            if not mox.file.exists(os.path.join(train_url, 'model')):
-                mox.file.mk_dir(os.path.join(train_url, 'model'))
-            mox.file.copy(save_path, os.path.join(train_url, 'model/model_best.pth'))
+            if not mox.file.exists(os.path.join(train_url, 'model_snapshots', 'model')):
+                mox.file.mk_dir(os.path.join(train_url, 'model_snapshots'))
+                mox.file.mk_dir(os.path.join(train_url, 'model_snapshots', 'model'))
+            mox.file.copy_parallel('/'.join(save_path.split('/')[:-1]), os.path.join(train_url, 'model_snapshots', 'model'))
+            mox.file.copy_parallel('../online-service/model', os.path.join(train_url, 'model_snapshots', 'model'))
     
     def load_checkpoint(self, load_path):
         ''' 保存模型参数

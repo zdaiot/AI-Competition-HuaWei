@@ -75,6 +75,7 @@ def get_classify_config():
     # 路径
     parser.add_argument('--train_url', type=str, default='./checkpoints', help='the path to save training outputs')
     parser.add_argument('--data_url', type=str, default='data/huawei_data/combine')
+    parser.add_argument('--init_method', type=str)
 
     config = parser.parse_args()
 

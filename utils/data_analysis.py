@@ -1,6 +1,7 @@
 import os
 import json
 import matplotlib.pyplot as plt
+plt.switch_backend('agg')
 import random
 import imagesize
 from matplotlib.font_manager import FontProperties
