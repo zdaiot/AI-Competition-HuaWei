@@ -4,7 +4,7 @@
 * Python3.7
 * pretrainedmodels
 * efficientnet-pytorch
-* Chinese font-simhei.ttf, [Download Link](https://fontzone.net/download/simhei). Put simhei in `progect_root/font`.
+* Chinese font-simhei.ttf, [Download Link](https://fontzone.net/download/simhei). Put simhei in `project_root/font`.
 
 ## How to run
 ### Clone Our Project

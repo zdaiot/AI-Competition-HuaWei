@@ -30,6 +30,10 @@ from datasets.create_dataset import multi_scale_transforms
 def prepare_data_on_modelarts(args):
     """
     如果数据集存储在OBS，则需要将OBS上的数据拷贝到 ModelArts 中
+    Args:
+        args: 配置参数
+    
+    args.bucket下面有这几个文件夹：data（存放数据，包含label_id_name.json以及其他数据文件夹），project用于存放工程代码
     """
     # 将数据从OBS args.data_url拷贝到args.data_local
     args.local_data_root = '/cache/'  # a directory used for transfer data between local path and OBS path
@@ -39,11 +43,12 @@ def prepare_data_on_modelarts(args):
     else:
         print('args.data_local: %s is already exist, skip copy' % args.data_local)
 
+    bucket_name = args.bucket_name
     # 复制json文件
-    mox.file.copy('s3://combine-zdaiot/label_id_name.json', args.local_data_root+'label_id_name.json')
-    mox.file.copy_parallel('s3://combine-zdaiot/AI-Competition-HuaWei/font', os.path.join(args.local_data_root, 'font'))
-    mox.file.copy_parallel('s3://combine-zdaiot/AI-Competition-HuaWei/online-service/model/',
-                           os.path.join(args.local_data_root, 'online-service/model/'))
+    mox.file.copy(os.path.join(bucket_name, 'data', 'label_id_name.json'), args.local_data_root+'label_id_name.json')
+    mox.file.copy_parallel(os.path.join(bucket_name, 'project', 'font'), os.path.join(args.local_data_root, 'font'))
+    mox.file.copy_parallel(os.path.join(bucket_name, 'project', 'online-service/model/'),
+                                os.path.join(args.local_data_root, 'online-service/model/'))
 
     # train_local: 用于训练过程中保存的输出位置，而train_url用于移动到OBS的位置
     args.train_local = os.path.join(args.local_data_root, 'model_snapshots')
@@ -75,6 +80,7 @@ class TrainVal:
         self.beta = config.beta
         self.cutmix_prob = config.cutmix_prob
         self.train_url = config.train_url
+        self.bucket_name = config.bucket_name
 
         self.image_size = config.image_size
         self.multi_scale = config.multi_scale
@@ -89,7 +95,7 @@ class TrainVal:
         # 拷贝预训练权重
         print("=> using pre-trained model '{}'".format(config.model_type))
         if not mox.file.exists('/home/work/.torch/models/se_resnext101_32x4d-3b2fe3d8.pth'):
-            mox.file.copy('s3://combine-zdaiot/model_zoo/se_resnext101_32x4d-3b2fe3d8.pth',
+            mox.file.copy(os.path.join(self.bucket_name, 'model_zoo/se_resnext101_32x4d-3b2fe3d8.pth'),
                           '/home/work/.torch/models/se_resnext101_32x4d-3b2fe3d8.pth')
             print('copy pre-trained model from OBS to: %s success' %
                   (os.path.abspath('/home/work/.torch/models/se_resnext101_32x4d-3b2fe3d8.pth')))
@@ -230,7 +236,7 @@ class TrainVal:
                 ),
                 state,
                 is_best,
-                self.train_url
+                self.bucket_name
             )
 
             if epoch % self.save_interval == 0:
@@ -241,7 +247,7 @@ class TrainVal:
                     ),
                     state,
                     False,
-                    self.train_url
+                    self.bucket_name
                 )
 
             # 写到tensorboard中

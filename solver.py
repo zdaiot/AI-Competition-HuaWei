@@ -95,13 +95,13 @@ class Solver:
             save_best_path = '/'.join(save_path.split('/')[:-1] + ['model_best.pth'])
             shutil.copyfile(save_path, save_best_path)
 
-    def save_checkpoint_online(self, save_path, state, is_best, train_url):
+    def save_checkpoint_online(self, save_path, state, is_best, bucket_name):
         ''' 保存模型参数
         Args:
             save_path: str, 要保存的权重路径
             state: dict, 存有模型参数、最大dice等信息的字典
             is_best: bool, 是否为最优模型
-            train_url: str, 远程路径
+            bucket_name: str, 桶的名称
         Return:
             None
         '''
@@ -111,14 +111,15 @@ class Solver:
             print('Saving Best Model.')
             save_best_path = '/'.join(save_path.split('/')[:-1] + ['model_best.pth'])
             shutil.copyfile(save_path, save_best_path)
+            # 删除临时权重文件，加快拷贝到OBS的速度
             os.remove(save_path)
 
             # mox.file可兼容处理本地路径和OBS路径
-            if not mox.file.exists(os.path.join(train_url, 'model_snapshots', 'model')):
-                mox.file.mk_dir(os.path.join(train_url, 'model_snapshots'))
-                mox.file.mk_dir(os.path.join(train_url, 'model_snapshots', 'model'))
-            mox.file.copy_parallel('/'.join(save_path.split('/')[:-1]), os.path.join(train_url, 'model_snapshots', 'model'))
-            mox.file.copy_parallel('../online-service/model', os.path.join(train_url, 'model_snapshots', 'model'))
+            if not mox.file.exists(os.path.join(bucket_name, 'model_snapshots', 'model')):
+                mox.file.mk_dir(os.path.join(bucket_name, 'model_snapshots'))
+                mox.file.mk_dir(os.path.join(bucket_name, 'model_snapshots', 'model'))
+            mox.file.copy_parallel('/'.join(save_path.split('/')[:-1]), os.path.join(bucket_name, 'model_snapshots', 'model'))
+            mox.file.copy_parallel('../online-service/model', os.path.join(bucket_name, 'model_snapshots', 'model'))
     
     def load_checkpoint(self, load_path):
         ''' 保存模型参数

@@ -78,6 +78,7 @@ def get_classify_config():
     parser.add_argument('--init_method', type=str)
 
     config = parser.parse_args()
+    config.bucket_name = '/'.join(config.train_url.split('/')[:-1])
 
     return config
 
