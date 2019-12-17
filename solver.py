@@ -116,8 +116,7 @@ class Solver:
 
             # mox.file可兼容处理本地路径和OBS路径
             if not mox.file.exists(os.path.join(bucket_name, 'model_snapshots', 'model')):
-                mox.file.mk_dir(os.path.join(bucket_name, 'model_snapshots'))
-                mox.file.mk_dir(os.path.join(bucket_name, 'model_snapshots', 'model'))
+                mox.file.make_dirs(os.path.join(bucket_name, 'model_snapshots', 'model'))
             mox.file.copy_parallel('/'.join(save_path.split('/')[:-1]), os.path.join(bucket_name, 'model_snapshots', 'model'))
             mox.file.copy_parallel('../online-service/model', os.path.join(bucket_name, 'model_snapshots', 'model'))
     
