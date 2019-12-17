@@ -18,7 +18,7 @@ def get_classify_config():
     parser.add_argument('--image_size', type=json.loads, default=[256, 256],
                         help='image size, for example --image_size [256,256]')
     parser.add_argument('--batch_size', type=int, default=36, help='batch size')
-    parser.add_argument('--epoch', type=int, default=40, help='epoch')
+    parser.add_argument('--epoch', type=int, default=30, help='epoch')
     # 多尺度
     parser.add_argument('--multi_scale', type=str2bool, nargs='?', const=True, default=True,
                         help='use multi scale training or not.')
@@ -31,7 +31,7 @@ def get_classify_config():
                         help='if true, use augmentation method in train set')
     parser.add_argument('--erase_prob', type=float, default=0.0,
                         help='probability of random erase when augmentation_flag is True')
-    parser.add_argument('--gray_prob', type=float, default=0.3,
+    parser.add_argument('--gray_prob', type=float, default=0.2,
                         help='probability of gray when augmentation_flag is True')
     # cut_mix
     parser.add_argument('--cut_mix', type=str2bool, nargs='?', const=True, default=True,
