@@ -4,6 +4,8 @@
 import torch
 import shutil
 import os
+import glob
+
 try:
     import moxing as mox
 except:
@@ -106,6 +108,13 @@ class Solver:
             None
         '''
         torch.save(state, save_path)
+        # mox.file可兼容处理本地路径和OBS路径
+        # see https://github.com/huaweicloud/ModelArts-Lab/blob/master/docs/moxing_api_doc/MoXing_API_File.md
+        if not mox.file.exists(os.path.join(bucket_name, 'model_snapshots', 'model')):
+            mox.file.make_dirs(os.path.join(bucket_name, 'model_snapshots', 'model'))
+
+        for file in glob.glob('/'.join(save_path.split('/')[:-1]) + '/events*'):
+            mox.file.copyfile(file, os.path.join(bucket_name, 'model_snapshots', 'model', os.path.basename(file)))
 
         if is_best:
             print('Saving Best Model.')
@@ -114,12 +123,10 @@ class Solver:
             # 删除临时权重文件，加快拷贝到OBS的速度
             os.remove(save_path)
 
-            # mox.file可兼容处理本地路径和OBS路径
-            if not mox.file.exists(os.path.join(bucket_name, 'model_snapshots', 'model')):
-                mox.file.make_dirs(os.path.join(bucket_name, 'model_snapshots', 'model'))
-            mox.file.copy_parallel('/'.join(save_path.split('/')[:-1]), os.path.join(bucket_name, 'model_snapshots', 'model'))
+            mox.file.copy_parallel('/'.join(save_path.split('/')[:-1]),
+                                   os.path.join(bucket_name, 'model_snapshots', 'model'))
             mox.file.copy_parallel('../online-service/model', os.path.join(bucket_name, 'model_snapshots', 'model'))
-    
+
     def load_checkpoint(self, load_path):
         ''' 保存模型参数
         Args:

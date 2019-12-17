@@ -315,7 +315,7 @@ class TrainVal:
         TIMESTAMP = "log-{0:%Y-%m-%dT%H-%M-%S}".format(datetime.datetime.now())
         log_dir = os.path.join(self.config.train_local, self.config.model_type, TIMESTAMP)
         writer = SummaryWriter(log_dir=log_dir)
-        with codecs.open(os.path.join(log_dir, 'config.json'), 'w', "utf-8") as json_file:
+        with codecs.open(os.path.join(log_dir, 'param.json'), 'w', "utf-8") as json_file:
             json.dump({k: v for k, v in config._get_kwargs()}, json_file, ensure_ascii=False)
 
         seed = int(time.time())
