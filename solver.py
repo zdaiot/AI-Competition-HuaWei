@@ -114,7 +114,7 @@ class Solver:
             mox.file.make_dirs(os.path.join(bucket_name, 'model_snapshots', 'model'))
 
         for file in glob.glob('/'.join(save_path.split('/')[:-1]) + '/events*'):
-            mox.file.copyfile(file, os.path.join(bucket_name, 'model_snapshots', 'model', os.path.basename(file)))
+            mox.file.copy(file, os.path.join(bucket_name, 'model_snapshots', 'model', os.path.basename(file)))
 
         if is_best:
             print('Saving Best Model.')
