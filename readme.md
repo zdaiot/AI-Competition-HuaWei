@@ -1,4 +1,7 @@
+
+
 ## Requirements
+
 * Pytorch 1.3.0 
 * Torchvision 0.4.0
 * Python3.7
@@ -136,3 +139,113 @@ If you want to update the weight file or python files. Please manually put new p
 ```bash
 ./upload.sh
 ```
+
+## How to train online
+
+Suppose you have built a new bucket called `ai-competition-zdaiot`
+
+### upload dataset
+
+Create a new folder named `data` in `ai-competition-zdaiot` bucket .  And upload dataset to `data`. Don't fotget upload `label_id_name.json`. For example:
+
+![1576576165411](readme/1576576165411.png)
+
+### upload project
+
+Create a new folder named `project` in`ai-competition-zdaiot` bucket .  And upload Our Project to `project`. Don't fotget upload `font`. For example:
+
+![1576576383338](readme/1576576383338.png)
+
+### upload model_zoo
+
+Create a new folder named `model_zoo` in `ai-competition-zdaiot` bucket . And upload pretrained model to `model_zoo`.
+
+For example, I uploaded a pre-training model called `se_resnext101_32x4d-3b2fe3d8.pth`.
+
+![1576576063711](readme/1576576063711.png)
+
+### prepare logs folder
+
+Create a new folder named `logs` in `ai-competition-zdaiot` bucket .
+
+### Run
+
+Open `ModelArts->训练管理->训练作业->创建`，Fill in the following parameters
+
+![1576576588989](readme/1576576588989.png)
+
+If necessary, add custom parameters in the `训练作业`, and then click OK.
+
+During the training process, you can view the running logs through the `logs` folder under the `ai-competition-zdaiot` bucket root directory.
+
+After training, the inference scripts and the optimal weight will be saved in the `model_snapshots` folder under the `ai-competition-zdaiot` bucket root directory.
+
+## Tricks Tried
+
+### Dataset
+
+- train_data
+- combine
+- huge
+- adversial_samples
+
+### Augmentation
+
+- erase_prob
+- gray_prob
+- cut_mix
+
+### Cross validation
+
+- StratifiedKFold
+- KFold
+
+### Training strategy
+
+1. Train only on Single image scale
+2. The training is divided into two stages, the first stage is training at lower resolution（256）, and the second stage is fine-tuning at higher resolution（416）.
+3. The training is divided into three stages, the first stage is trained at a lower resolution（256）, the second stage is fine-tuned at a medium resolution（336）, and the third stage is at a higher resolution（416）.
+4. Multi-scale training, switching resolution every several iterations.
+5. The training is divided into two stages, the first stage is based on all data sets, and the second stage is only fine-tuning on food.
+
+### Losses
+
+- CrossEntropy
+- SmoothCrossEntropy
+- FocalLoss
+- CB_Sigmoid
+- CB_Focal
+- CB_Softmax
+- CB_Smooth_Softmax
+
+### Optimizer
+
+- Adam
+- SGD
+
+### Lr scheduler
+
+Init Lr and weight decay
+
+- StepLR
+
+- CosineLR
+
+- ReduceLR
+
+- MultiStepLR
+
+#### Model type
+
+- densenet201
+
+- efficientnet-b5
+
+- se_resnext101_32x4d
+
+### TODO Tricks
+
+- Save the optimal model using loss on the validation set
+- Use more data augmentation, see [here](https://github.com/clovaai/CutMix-PyTorch/blob/e54b8387ad6f63d2b9cb2c1f9dc332aad2d185e1/train.py#L132).
+- Change the weight normalization mode of class balance 
+
