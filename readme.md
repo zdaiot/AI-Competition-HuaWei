@@ -189,6 +189,16 @@ After training, the inference scripts and the optimal weight will be saved in th
 - huge
 - adversial_samples
 
+### Data clean
+
+Delete pictures with the following characteristics
+- ambiguity
+- wrong
+- image resolution is too low
+- There are no such data characteristics, for example, there are only `石子` in `石子饼` and only `浆水` in `浆水面`.
+- The target does not occupy the main body of the image. This is especially important for image classification tasks.
+- Tourism promotional images, false advertising images, graffiti
+
 ### Augmentation
 
 - erase_prob
@@ -206,7 +216,7 @@ After training, the inference scripts and the optimal weight will be saved in th
 2. The training is divided into two stages, the first stage is training at lower resolution（256）, and the second stage is fine-tuning at higher resolution（416）.
 3. The training is divided into three stages, the first stage is trained at a lower resolution（256）, the second stage is fine-tuned at a medium resolution（336）, and the third stage is at a higher resolution（416）.
 4. Multi-scale training, switching resolution every several iterations.
-5. The training is divided into two stages, the first stage is based on all data sets, and the second stage is only fine-tuning on food.
+5. The training is divided into two stages, the first stage is based on all data sets, and the second stage is only fine-tuning on food. In the second stage of training, get rid of all data enhancement methods.
 
 ### Losses
 
@@ -216,7 +226,7 @@ After training, the inference scripts and the optimal weight will be saved in th
 - CB_Sigmoid
 - CB_Focal
 - CB_Softmax
-- CB_Smooth_Softmax
+- CB_Smooth_Softmax（Not work，0.964）
 
 ### Optimizer
 
@@ -233,7 +243,7 @@ Init Lr and weight decay
 
 - ReduceLR
 
-- MultiStepLR
+- MultiStepLR（18/25，Not work 0.9710）
 
 #### Model type
 
@@ -245,7 +255,7 @@ Init Lr and weight decay
 
 ### TODO Tricks
 
-- Save the optimal model using loss on the validation set
-- Use more data augmentation, see [here](https://github.com/clovaai/CutMix-PyTorch/blob/e54b8387ad6f63d2b9cb2c1f9dc332aad2d185e1/train.py#L132).
+- Save the optimal model using loss on the validation set（Not work, only 0.972）
+- Use more data augmentation, see [here](https://github.com/clovaai/CutMix-PyTorch/blob/e54b8387ad6f63d2b9cb2c1f9dc332aad2d185e1/train.py#L132). (Use Resize, RandomHorizontalFlip, ToTensor, jittering, lighting, Normalize. And use cutmix 0.967)
 - Change the weight normalization mode of class balance 
 

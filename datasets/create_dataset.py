@@ -289,6 +289,7 @@ class GetDataloader(object):
             labels_number: dict, {label_1: number_1, label_2: number_2, ...}
             phase: str, 当前模式
         """
+        labels_number = {k: v for k, v in sorted(labels_number.items(), key=lambda item: item[1])}
         labels = labels_number.keys()
         number = labels_number.values()
         name = [self.label_to_name[str(label)] for label in labels]
