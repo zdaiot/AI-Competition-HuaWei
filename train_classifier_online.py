@@ -166,7 +166,7 @@ class TrainVal:
 
             tbar = tqdm.tqdm(train_loader)
             image_size = self.image_size
-            for i, (images, labels) in enumerate(tbar):
+            for i, (_, images, labels) in enumerate(tbar):
                 if self.multi_scale:
                     if i % self.multi_scale_interval == 0:
                         image_size = random.choice(self.multi_scale_size)
