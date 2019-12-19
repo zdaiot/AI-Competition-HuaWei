@@ -361,7 +361,7 @@ class GetDataloader(object):
             samples: list, 所有的图片名称
             labels: list, 所有的图片对应的类标, 和samples一一对应
         """
-        files_list = os.listdir(self.data_root)
+        files_list = sorted(os.listdir(self.data_root))
         # 过滤得到标注文件
         annotations_files_list = [f for f in files_list if f.split('.')[1] == 'txt']
 
