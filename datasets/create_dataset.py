@@ -23,6 +23,8 @@ class TrainDataset(Dataset):
             mean: tuple, 通道均值
             std: tuple, 通道方差
             transforms: callable, 数据集转换方式
+            choose_dataset: str，选择什么数据集
+            multi_scale: bool, 是否使用多尺度训练
         """
         super(TrainDataset, self).__init__()
         self.data_root = data_root
@@ -104,6 +106,8 @@ class ValDataset(Dataset):
             size: [height, width], 图片的目标大小
             mean: tuple, 通道均值
             std: tuple, 通道方差
+            choose_dataset: str，选择什么数据集
+            multi_scale: bool, 是否使用多尺度训练
         """
         super(ValDataset, self).__init__()
         self.data_root = data_root
@@ -175,6 +179,8 @@ class GetDataloader(object):
             data_root: str, 数据集根目录
             folds_split: int, 划分为几折
             test_size: 验证集占的比例, [0, 1]
+            label_names_path: str, label_id_name.json的路径
+            choose_dataset: str，选择什么数据集
         """
         self.data_root = data_root
         self.folds_split = folds_split
@@ -385,6 +391,17 @@ class GetDataloader(object):
 
 
 def multi_scale_transforms(image_size, images, mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)):
+    """ TrainDataset类中无法实现可变的图像尺寸，借助这个函数实现
+
+    Args:
+        image_size: tuple, 图片的目标大小[height, width]
+        images: tensor, 一个batch的数据，尺度为[batch_size, height, width, 3]
+        mean: tuple, 通道均值
+        std: tuple, 通道方差
+
+    Returns:
+        images_resize: tensor, 一个batch的数据，尺度为[batch_size, 3, height, width]
+    """
     transform_train_list = [
                 T.Resize(image_size, interpolation=3),
                 T.ToTensor(),

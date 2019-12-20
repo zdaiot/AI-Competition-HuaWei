@@ -94,14 +94,14 @@ class TrainVal:
 
         # 拷贝预训练权重
         print("=> using pre-trained model '{}'".format(config.model_type))
-        if not mox.file.exists('/home/work/.torch/models/se_resnext101_32x4d-3b2fe3d8.pth'):
+        if not mox.file.exists('/home/work/.cache/torch/checkpoints/se_resnext101_32x4d-3b2fe3d8.pth'):
             mox.file.copy(os.path.join(self.bucket_name, 'model_zoo/se_resnext101_32x4d-3b2fe3d8.pth'),
-                          '/home/work/.torch/models/se_resnext101_32x4d-3b2fe3d8.pth')
+                          '/home/work/.cache/torch/checkpoints/se_resnext101_32x4d-3b2fe3d8.pth')
             print('copy pre-trained model from OBS to: %s success' %
-                  (os.path.abspath('/home/work/.torch/models/se_resnext101_32x4d-3b2fe3d8.pth')))
+                  (os.path.abspath('/home/work/.cache/torch/checkpoints/se_resnext101_32x4d-3b2fe3d8.pth')))
         else:
             print('use exist pre-trained model at: %s' %
-                  (os.path.abspath('/home/work/.torch/models/se_resnext101_32x4d-3b2fe3d8.pth')))
+                  (os.path.abspath('/home/work/.cache/torch/checkpoints/se_resnext101_32x4d-3b2fe3d8.pth')))
 
         # 加载模型
         prepare_model = PrepareModel()
@@ -214,7 +214,7 @@ class TrainVal:
             # 写到tensorboard中
             epoch_acc = epoch_corrects / images_number
             self.writer.add_scalar('TrainAccEpoch', epoch_acc, epoch)
-            self.writer.add_scalar('Lr', self.optimizer.param_groups[0]['lr'], epoch)
+            self.writer.add_scalar('Lr', self.optimizer.param_groups[1]['lr'], epoch)
             descript = self.criterion.record_loss_epoch(len(train_loader), self.writer.add_scalar, epoch)
 
             # Print the log info
