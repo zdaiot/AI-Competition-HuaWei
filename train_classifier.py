@@ -159,12 +159,18 @@ class TrainVal:
                     train_acc_iteration
                 ) + descript
 
+                # 对于 CyclicLR，要每一步均执行依次学习率衰减
+                if self.lr_scheduler == 'CyclicLR':
+                    self.exp_lr_scheduler.step()
+                    self.writer.add_scalar('Lr', self.optimizer.param_groups[1]['lr'], global_step + i)
+
                 tbar.set_description(desc=descript)
 
             # 写到tensorboard中
             epoch_acc = epoch_corrects / images_number
             self.writer.add_scalar('TrainAccEpoch', epoch_acc, epoch)
-            self.writer.add_scalar('Lr', self.optimizer.param_groups[1]['lr'], epoch)
+            if self.lr_scheduler != 'CyclicLR':
+                self.writer.add_scalar('Lr', self.optimizer.param_groups[1]['lr'], epoch)
             descript = self.criterion.record_loss_epoch(len(train_loader), self.writer.add_scalar, epoch)
 
             # Print the log info
@@ -205,7 +211,7 @@ class TrainVal:
             # 每一个epoch完毕之后，执行学习率衰减
             if self.lr_scheduler == 'ReduceLR':
                 self.exp_lr_scheduler.step(val_loss)
-            else:
+            elif self.lr_scheduler != 'CyclicLR':
                 self.exp_lr_scheduler.step()
             global_step += len(train_loader)
         print('BEST ACC:{}'.format(self.max_accuracy_valid))

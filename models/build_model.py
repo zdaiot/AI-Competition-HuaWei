@@ -99,8 +99,8 @@ class PrepareModel:
         elif lr_scheduler_type == 'ReduceLR':
             my_lr_scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=5)
         elif lr_scheduler_type == 'CyclicLR':
-            # 当使用Adam算法时，必须将cycle_momentum设置为False，默认为True
-            my_lr_scheduler = lr_scheduler.CyclicLR(optimizer, base_lr=1e-5, max_lr=2.6e-3, step_size_up=1825,
+            # 当使用Adam算法时，必须将cycle_momentum设置为False，默认为True，这里的step_size_up设置了5个epoch
+            my_lr_scheduler = lr_scheduler.CyclicLR(optimizer, base_lr=1e-4, max_lr=2.6e-3, step_size_up=1805,
                                                     cycle_momentum=False)
         return my_lr_scheduler
 
