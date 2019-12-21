@@ -44,11 +44,14 @@ def prepare_data_on_modelarts(args):
         print('args.data_local: %s is already exist, skip copy' % args.data_local)
 
     bucket_name = args.bucket_name
-    # 复制json文件
+    # 复制其它必要文件
     mox.file.copy(os.path.join(bucket_name, 'data', 'label_id_name.json'), args.local_data_root+'label_id_name.json')
     mox.file.copy_parallel(os.path.join(bucket_name, 'project', 'font'), os.path.join(args.local_data_root, 'font'))
     mox.file.copy_parallel(os.path.join(bucket_name, 'project', 'online-service/model/'),
                                 os.path.join(args.local_data_root, 'online-service/model/'))
+    if args.load_split_from_file:
+        mox.file.copy(os.path.join(bucket_name, 'data', args.load_split_from_file), 
+                            args.local_data_root+args.load_split_from_file)
 
     # train_local: 用于训练过程中保存的输出位置，而train_url用于移动到OBS的位置
     args.train_local = os.path.join(args.local_data_root, 'model_snapshots')

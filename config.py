@@ -18,7 +18,7 @@ def get_classify_config():
 
     # -----------------------------------------超参数设置-----------------------------------------
     parser.add_argument('--batch_size', type=int, default=24, help='batch size')
-    parser.add_argument('--epoch', type=int, default=40, help='epoch')
+    parser.add_argument('--epoch', type=int, default=30, help='epoch')
     parser.add_argument('--lr', type=float, default=3e-4, help='init lr')
     parser.add_argument('--weight_decay', type=float, default=0, help='weight_decay in optimizer')
     
@@ -38,7 +38,7 @@ def get_classify_config():
                         help='if true, use augmentation method in train set')
     parser.add_argument('--erase_prob', type=float, default=0.0,
                         help='probability of random erase when augmentation_flag is True')
-    parser.add_argument('--gray_prob', type=float, default=0.0,
+    parser.add_argument('--gray_prob', type=float, default=0.3,
                         help='probability of gray when augmentation_flag is True')
     # cut_mix设置
     parser.add_argument('--cut_mix', type=str2bool, nargs='?', const=True, default=True,
@@ -52,7 +52,7 @@ def get_classify_config():
     parser.add_argument('--n_splits', type=int, default=5, help='n_splits_fold')
     parser.add_argument('--selected_fold', type=json.loads, default=[0], help='which folds for training')
     parser.add_argument('--val_size', type=float, default=0.2, help='the ratio of val data when n_splits=1.')
-    parser.add_argument('--load_split_from_file', type=str, default='data/huawei_data/dataset_split.json', 
+    parser.add_argument('--load_split_from_file', type=str, default='data/huawei_data/dataset_split_delete.json', 
                         help='Loading dataset split from this file')
 
     # -----------------------------------------模型设置-----------------------------------------
