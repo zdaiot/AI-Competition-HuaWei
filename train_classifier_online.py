@@ -50,8 +50,9 @@ def prepare_data_on_modelarts(args):
     mox.file.copy_parallel(os.path.join(bucket_name, 'project', 'online-service/model/'),
                                 os.path.join(args.local_data_root, 'online-service/model/'))
     if args.load_split_from_file:
-        mox.file.copy(os.path.join(bucket_name, 'data', args.load_split_from_file), 
-                            args.local_data_root+args.load_split_from_file)
+        mox.file.copy(os.path.join(bucket_name, 'data', args.load_split_from_file.split('/')[-1]), 
+                            args.local_data_root+args.load_split_from_file.split('/')[-1])
+        args.load_split_from_file = args.local_data_root+args.load_split_from_file.split('/')[-1]
 
     # train_local: 用于训练过程中保存的输出位置，而train_url用于移动到OBS的位置
     args.train_local = os.path.join(args.local_data_root, 'model_snapshots')

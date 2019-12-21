@@ -336,7 +336,7 @@ class GetDataloader(object):
         """
         if self.load_split_from_file:
             print('Loading dataset split from %s' % self.load_split_from_file)
-            with open(self.load_split_from_file, 'r') as f:
+            with open(self.load_split_from_file, 'r', encoding='utf-8-sig') as f:
                 train_list, val_list = json.load(f)
         else:
             if self.folds_split == 1:
