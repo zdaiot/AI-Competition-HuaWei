@@ -155,9 +155,19 @@ if __name__ == "__main__":
     shutil.rmtree(save_path)
     os.makedirs(save_path)
 
-    get_dataloader = GetDataloader(data_root, folds_split=folds_split, test_size=test_size, choose_dataset=config.choose_dataset)
-    train_dataloaders, val_dataloaders, _, _ = get_dataloader.get_dataloader(config.batch_size, config.image_size, mean, std,
-                                                                       transforms=transforms)
+    get_dataloader = GetDataloader(
+        data_root, 
+        folds_split=folds_split, 
+        test_size=test_size, 
+        choose_dataset=config.choose_dataset,
+        load_split_from_file=config.load_split_from_file
+        )
+    train_dataloaders, val_dataloaders, _, _ = get_dataloader.get_dataloader(
+        config.batch_size, 
+        config.image_size, 
+        mean, std,
+        transforms=transforms
+        )
 
     for fold_index, [train_loader, valid_loader] in enumerate(zip(train_dataloaders, val_dataloaders)):
         if fold_index in config.selected_fold:

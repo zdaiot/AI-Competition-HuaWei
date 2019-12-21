@@ -173,20 +173,30 @@ class ValDataset(Dataset):
 
 
 class GetDataloader(object):
-    def __init__(self, data_root, folds_split=1, test_size=None, label_names_path='data/huawei_data/label_id_name.json', choose_dataset='combine'):
+    def __init__(
+        self, 
+        data_root, 
+        folds_split=1, 
+        test_size=None, 
+        label_names_path='data/huawei_data/label_id_name.json', 
+        choose_dataset='combine',
+        load_split_from_file=None
+        ):
         """
         Args:
             data_root: str, 数据集根目录
-            folds_split: int, 划分为几折
+            folds_split: int, 划分为几折，当划分1折时，则根据test_size划分验证集与训练集
             test_size: 验证集占的比例, [0, 1]
             label_names_path: str, label_id_name.json的路径
             choose_dataset: str，选择什么数据集
+            load_split_from_file: str, 存放数据集划分的文件的路径，如果存在则从文件加载，否则在线生成
         """
         self.data_root = data_root
         self.folds_split = folds_split
         self.samples, self.labels = self.get_samples_labels()
         self.test_size = test_size
         self.choose_dataset = choose_dataset
+        self.load_split_from_file = load_split_from_file
         with open(label_names_path, 'r') as f:
             self.label_to_name = json.load(f)
             self.name_to_label = {v: k for k, v in self.label_to_name.items()}
@@ -324,10 +334,15 @@ class GetDataloader(object):
             train_list: list, 每一个数据均为[train_sample, train_label], train_sample: list, 样本名称， train_label: list, 样本类标
             val_list: list, 每一个数据均为[val_sample, val_label]， val_sample: list, 样本名称， val_label: list, 样本类标
         """
-        if self.folds_split == 1:
-            train_list, val_list = self.get_data_split_single()
+        if self.load_split_from_file:
+            print('Loading dataset split from %s' % self.load_split_from_file)
+            with open(self.load_split_from_file, 'r') as f:
+                train_list, val_list = json.load(f)
         else:
-            train_list, val_list = self.get_data_split_folds()
+            if self.folds_split == 1:
+                train_list, val_list = self.get_data_split_single()
+            else:
+                train_list, val_list = self.get_data_split_folds()
 
         return train_list, val_list
         

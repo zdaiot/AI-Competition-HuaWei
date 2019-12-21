@@ -353,7 +353,8 @@ if __name__ == "__main__":
         folds_split=folds_split,
         test_size=test_size,
         label_names_path=config.local_data_root+'label_id_name.json',
-        choose_dataset=config.choose_dataset
+        choose_dataset=config.choose_dataset,
+        load_split_from_file=config.load_split_from_file
     )
 
     train_dataloaders, val_dataloaders, train_labels_number_folds, _ = get_dataloader.get_dataloader(

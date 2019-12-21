@@ -287,11 +287,19 @@ if __name__ == "__main__":
     multi_scale = config.multi_scale
     mean = (0.485, 0.456, 0.406)
     std = (0.229, 0.224, 0.225)
+    
     if config.augmentation_flag:
         transforms = DataAugmentation(config.erase_prob, full_aug=True, gray_prob=config.gray_prob)
     else:
         transforms = None
-    get_dataloader = GetDataloader(data_root, folds_split=folds_split, test_size=test_size, choose_dataset=config.choose_dataset)
+
+    get_dataloader = GetDataloader(
+        data_root, 
+        folds_split=folds_split, 
+        test_size=test_size, 
+        choose_dataset=config.choose_dataset,
+        load_split_from_file=config.load_split_from_file
+        )
 
     train_dataloaders, val_dataloaders, train_labels_number_folds, _ = get_dataloader.get_dataloader(
         config.batch_size,

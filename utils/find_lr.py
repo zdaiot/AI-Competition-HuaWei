@@ -61,7 +61,7 @@ def find_lr(trn_loader, optimizer, net, criterion, init_value=1e-8, final_value=
         log_lrs: list，从小到大的学习率
         losses: list，对应于log_lrs学习率的损失
 
-    Note: 请根据param_groups的实际数量调整下面的初始化学习
+    Note: 请根据param_groups的实际数量调整下面的初始化学习率以及更新学习率
     """
     num = len(trn_loader) - 1
     mult = (final_value / init_value) ** (1 / num)
@@ -138,8 +138,14 @@ if __name__ == "__main__":
         transforms = DataAugmentation(config.erase_prob, full_aug=True, gray_prob=config.gray_prob)
     else:
         transforms = None
-    get_dataloader = GetDataloader(data_root, folds_split=folds_split, test_size=test_size,
-                                   choose_dataset=config.choose_dataset)
+
+    get_dataloader = GetDataloader(
+        data_root, 
+        folds_split=folds_split, 
+        test_size=test_size,
+        choose_dataset=config.choose_dataset,
+        load_split_from_file=config.load_split_from_file
+        )
 
     train_dataloaders, val_dataloaders, train_labels_number_folds, _ = get_dataloader.get_dataloader(
         config.batch_size,
