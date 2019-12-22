@@ -64,6 +64,13 @@ class PrepareModel:
                     {'params': base_params, 'lr': 0.1 * config.lr},
                     {'params': model.module.classifier.parameters(), 'lr': config.lr}
                 ], weight_decay=config.weight_decay, momentum=0.9)
+        elif config.optimizer == 'RangerLars':
+            from torchtools.optim import RangerLars
+            optimizer = RangerLars(
+                [
+                    {'params': base_params, 'lr': 0.1 * config.lr},
+                    {'params': model.module.classifier.parameters(), 'lr': config.lr}
+                ], weight_decay=config.weight_decay, momentum=0.9)
 
         return optimizer
 
@@ -97,11 +104,14 @@ class PrepareModel:
                 raise ValueError('You must specified multi step when you are using MultiStepLR.')
             my_lr_scheduler = lr_scheduler.MultiStepLR(optimizer, multi_step)            
         elif lr_scheduler_type == 'ReduceLR':
-            my_lr_scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=5)
+            my_lr_scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.7, patience=3, verbose=True)
         elif lr_scheduler_type == 'CyclicLR':
             # 当使用Adam算法时，必须将cycle_momentum设置为False，默认为True；作者建议设定step_size_up = (2-8) x (training iterations in epoch)
             my_lr_scheduler = lr_scheduler.CyclicLR(optimizer, base_lr=1e-4, max_lr=2.6e-3, step_size_up=1805,
                                                     cycle_momentum=False)
+        elif lr_scheduler_type == 'Flat_CosAnneal':
+            from torchtools.lr_scheduler import DelayerScheduler, DelayedCosineAnnealingLR
+            my_lr_scheduler = DelayedCosineAnnealingLR(optimizer, 50, 50)
         return my_lr_scheduler
 
     def load_chekpoint(self, model, weight_path):

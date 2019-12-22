@@ -53,6 +53,12 @@ def prepare_data_on_modelarts(args):
         mox.file.copy(os.path.join(bucket_name, 'data', args.load_split_from_file.split('/')[-1]), 
                             args.local_data_root+args.load_split_from_file.split('/')[-1])
         args.load_split_from_file = args.local_data_root+args.load_split_from_file.split('/')[-1]
+    
+    # 复制扩展包
+    mox.file.copy(os.path.join(bucket_name, 'data', 'torchtools-0.2.4-py3-none-any.whl'), 
+                        args.local_data_root+'torchtools-0.2.4-py3-none-any.whl')
+    pip = os.popen('pip install /cache/torchtools-0.2.4-py3-none-any.whl')
+    print(pip.read())
 
     # train_local: 用于训练过程中保存的输出位置，而train_url用于移动到OBS的位置
     args.train_local = os.path.join(args.local_data_root, 'model_snapshots')
@@ -266,7 +272,7 @@ class TrainVal:
 
             # 每一个epoch完毕之后，执行学习率衰减
             if self.lr_scheduler == 'ReduceLR':
-                self.exp_lr_scheduler.step(val_loss)
+                self.exp_lr_scheduler.step(val_accuracy)
             elif self.lr_scheduler != 'CyclicLR':
                 self.exp_lr_scheduler.step()
             global_step += len(train_loader)

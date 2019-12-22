@@ -1,5 +1,6 @@
 import argparse
 import json
+import pprint
 
 
 def str2bool(v):
@@ -18,8 +19,8 @@ def get_classify_config():
 
     # -----------------------------------------超参数设置-----------------------------------------
     parser.add_argument('--batch_size', type=int, default=24, help='batch size')
-    parser.add_argument('--epoch', type=int, default=30, help='epoch')
-    parser.add_argument('--lr', type=float, default=3e-4, help='init lr')
+    parser.add_argument('--epoch', type=int, default=150, help='epoch')
+    parser.add_argument('--lr', type=float, default=1e-3, help='init lr')
     parser.add_argument('--weight_decay', type=float, default=0, help='weight_decay in optimizer')
     
     # -----------------------------------------数据增强设置-----------------------------------------
@@ -67,8 +68,8 @@ def get_classify_config():
 
     # -----------------------------------------学习率衰减策略与优化器设置-----------------------------------------
     # 学习率衰减策略
-    parser.add_argument('--lr_scheduler', type=str, default='StepLR',
-                        help='lr scheduler, StepLR/CosineLR/ReduceLR/MultiStepLR/CyclicLR')
+    parser.add_argument('--lr_scheduler', type=str, default='ReduceLR',
+                        help='lr scheduler, StepLR/CosineLR/ReduceLR/MultiStepLR/CyclicLR/Flat_CosAnneal')
     parser.add_argument('--lr_step_size', type=int, default=20, help='step_size for StepLR scheduler')
     parser.add_argument('--restart_step', type=int, default=80, help='T_max for CosineAnnealingLR scheduler')
     parser.add_argument('--multi_step', type=int, nargs='+', default=[20, 35, 45], help='Milestone of MultiStepLR')
@@ -90,6 +91,7 @@ def get_classify_config():
     config = parser.parse_args()
     config.bucket_name = '/'.join(config.train_url.split('/')[:-2])
 
+    pprint.pprint(config)
     return config
 
 
