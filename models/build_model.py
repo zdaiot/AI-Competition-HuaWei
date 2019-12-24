@@ -70,7 +70,7 @@ class PrepareModel:
                 [
                     {'params': base_params, 'lr': 0.1 * config.lr},
                     {'params': model.module.classifier.parameters(), 'lr': config.lr}
-                ], weight_decay=config.weight_decay, momentum=0.9)
+                ], weight_decay=config.weight_decay)
 
         return optimizer
 
@@ -111,7 +111,7 @@ class PrepareModel:
                                                     cycle_momentum=False)
         elif lr_scheduler_type == 'Flat_CosAnneal':
             from torchtools.lr_scheduler import DelayerScheduler, DelayedCosineAnnealingLR
-            my_lr_scheduler = DelayedCosineAnnealingLR(optimizer, 50, 50)
+            my_lr_scheduler = DelayedCosineAnnealingLR(optimizer, 30, 80)
         return my_lr_scheduler
 
     def load_chekpoint(self, model, weight_path):

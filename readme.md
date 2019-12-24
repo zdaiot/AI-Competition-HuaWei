@@ -187,7 +187,7 @@ After training, the inference scripts and the optimal weight will be saved in th
 - train_data
 - combine
 - huge
-- adversial_samples
+- adversial_samples（Not work，When the samples and their adversial samples are in training set and verification set respectively, the accuracy of the verification set is too high.）
 
 ### Data clean
 
@@ -201,6 +201,7 @@ Delete pictures with the following characteristics
 
 ### Augmentation
 
+- CenterCrop(Not well，only 0.969)
 - erase_prob
 - gray_prob
 - cut_mix
@@ -216,7 +217,7 @@ Delete pictures with the following characteristics
 2. The training is divided into two stages, the first stage is training at lower resolution（256）, and the second stage is fine-tuning at higher resolution（416）.
 3. The training is divided into three stages, the first stage is trained at a lower resolution（256）, the second stage is fine-tuned at a medium resolution（336）, and the third stage is at a higher resolution（416）.
 4. Multi-scale training, switching resolution every several iterations.
-5. The training is divided into two stages, the first stage is based on all data sets, and the second stage is only fine-tuning on food. In the second stage of training, get rid of all data enhancement methods.
+5. The training is divided into two stages, the first stage is based on all data sets, and the second stage is only fine-tuning on food. In the second stage of training, get rid of all data enhancement methods.（Not work）
 
 ### Losses
 
@@ -227,6 +228,12 @@ Delete pictures with the following characteristics
 - CB_Focal
 - CB_Softmax
 - CB_Smooth_Softmax（Not work，0.964）
+
+### Super parameter
+
+- Lr: If the initial learning rates of backbone and fc layers are the same, the convergence speed is too slow.
+- Weight decay: Not work
+- Epoch： Try more epochs
 
 ### Optimizer
 

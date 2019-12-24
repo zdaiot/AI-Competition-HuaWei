@@ -85,7 +85,6 @@ class TrainVal:
         self.epoch = config.epoch
         self.num_classes = config.num_classes
         self.lr_scheduler = config.lr_scheduler
-        self.save_interval = 100
         self.cut_mix = config.cut_mix
         self.beta = config.beta
         self.cutmix_prob = config.cutmix_prob
@@ -254,17 +253,6 @@ class TrainVal:
                 is_best,
                 self.bucket_name
             )
-
-            if epoch % self.save_interval == 0:
-                self.solver.save_checkpoint_online(
-                    os.path.join(
-                        self.model_path,
-                        '%s_epoch%d_fold%d.pth' % (self.config.model_type, epoch, self.fold)
-                    ),
-                    state,
-                    False,
-                    self.bucket_name
-                )
 
             # 写到tensorboard中
             self.writer.add_scalar('ValidLoss', val_loss, epoch)
