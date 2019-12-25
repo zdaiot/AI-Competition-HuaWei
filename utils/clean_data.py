@@ -5,6 +5,29 @@ import glob
 import hashlib
 
 
+def copy_files_not_remote(filenames_path):
+    with open(filenames_path, 'r') as f:
+        data = f.readlines()
+        for line in data:
+            shutil.copy('data/huawei_data/combine/{}'.format(line.strip()), 'data/huawei_data/remote')
+            print(line.strip())
+
+
+def delete_files_not_local(filenames_path):
+    with open(filenames_path, 'r') as f:
+        data = f.readlines()
+        data = [x.strip() for x in data]
+    for each_file in os.listdir('data/huawei_data/official_google_bing_baidu'):
+        if each_file not in data:
+            # shutil.copy('data/huawei_data/official_google_bing_baidu/{}'.format(each_file), 'data/huawei_data/remote')
+            os.remove('data/huawei_data/official_google_bing_baidu/{}'.format(each_file))
+            print(each_file)
+    
+    for each_file in data:
+        if each_file not in os.listdir('data/huawei_data/official_google_bing_baidu'):
+            print(each_file)
+
+
 def delete_orphaned(ipath):
     """ 删除当前路径下孤立的txt文件以及img文件
 
@@ -161,4 +184,6 @@ if __name__ == '__main__':
         label_id = json.load(json_file)
     # clean_data('data/huawei_data/combine', label_id)
 
-    split_official_pseudo('data/huawei_data/combine', 'data/huawei_data/psudeo_image')
+    # split_official_pseudo('data/huawei_data/combine', 'data/huawei_data/psudeo_image')
+
+    delete_files_not_local('data/huawei_data/filenames.txt')

@@ -18,20 +18,20 @@ def get_classify_config():
     parser = argparse.ArgumentParser()
 
     # -----------------------------------------超参数设置-----------------------------------------
-    parser.add_argument('--batch_size', type=int, default=24, help='batch size')
+    parser.add_argument('--batch_size', type=int, default=72, help='batch size')
     parser.add_argument('--epoch', type=int, default=150, help='epoch')
     parser.add_argument('--lr', type=float, default=1e-3, help='init lr')
     parser.add_argument('--weight_decay', type=float, default=0, help='weight_decay in optimizer')
     
     # -----------------------------------------数据增强设置-----------------------------------------
-    parser.add_argument('--image_size', type=json.loads, default=[416, 416],
+    parser.add_argument('--image_size', type=json.loads, default=[320, 320],
                         help='image size, for example --image_size [256, 256], '
                              'Note that this size is also used for validation sets')
     # 多尺度设置
     parser.add_argument('--multi_scale', type=str2bool, nargs='?', const=True, default=True,
                         help='use multi scale training or not.')
     parser.add_argument('--multi_scale_size', type=json.loads,
-                        default=[[256, 256], [288, 288], [320, 320], [352, 352], [384, 384], [416, 416]],
+                        default=[[224, 224], [256, 256], [288, 288], [320, 320]],
                         help='multi scale choice. For example --multi_scale_size [[224,224],[444,444]]')
     parser.add_argument('--multi_scale_interval', type=int, default=10, help='make a scale choice every [] iterations.')
     # 数据增强设置

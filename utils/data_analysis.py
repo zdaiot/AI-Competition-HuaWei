@@ -127,31 +127,35 @@ class DatasetStatistic:
         return label_to_name
 
     def show_image_aspect_ratio_distr(self):
-        """得到样本长宽比
+        """得到样本长宽比、平均长和宽
         """
         aspect_ratio_dict = {}
+        width_amount, height_amount = 0, 0
 
         image_names = self.get_image_names()
         for image_name in image_names:
             sample_path = os.path.join(self.data_root, image_name)
             width, height = imagesize.get(sample_path)
+            width_amount += width
+            height_amount += height
             aspect_ratio = width/height
             if aspect_ratio in aspect_ratio_dict:
                 aspect_ratio_dict[aspect_ratio] += 1
             else:
                 aspect_ratio_dict[aspect_ratio] = 0
-
+        print(width_amount/len(image_names), height_amount/len(image_names))
         aspect_ratio_dict_filt = {}
         for key, value in aspect_ratio_dict.items():
             if value > 100:
                 aspect_ratio_dict_filt[key] = value
         del aspect_ratio_dict
         plt.bar(aspect_ratio_dict_filt.keys(), aspect_ratio_dict_filt.values())
+        plt.savefig('readme/aspect_ratio')
         plt.show()
 
 
 if __name__ == '__main__':
-    data_root = 'data/huawei_data/train_data'
+    data_root = 'data/huawei_data/combine'
     label_id_json = 'data/huawei_data/label_id_name.json'
     dataset_statistic = DatasetStatistic(data_root, label_id_json)
     dataset_statistic.show_image_aspect_ratio_distr()
