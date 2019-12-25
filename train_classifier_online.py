@@ -157,7 +157,7 @@ class TrainVal:
         # 初始化分类度量准则类
         with open(config.local_data_root+'label_id_name.json', 'r', encoding='utf-8') as json_file:
             self.class_names = list(json.load(json_file).values())
-        self.classification_metric = ClassificationMetric(self.class_names, self.model_path)
+        self.classification_metric = ClassificationMetric(self.class_names, self.model_path, text_flag=0)
 
         self.max_accuracy_valid = 0
 
@@ -306,7 +306,6 @@ class TrainVal:
                     oa,
                     average_accuracy,
                     kappa,
-                    text_flag=0,
                     font_fname="../font/simhei.ttf"
                 )
             else:

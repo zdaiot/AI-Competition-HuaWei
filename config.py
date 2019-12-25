@@ -18,7 +18,7 @@ def get_classify_config():
     parser = argparse.ArgumentParser()
 
     # -----------------------------------------超参数设置-----------------------------------------
-    parser.add_argument('--batch_size', type=int, default=72, help='batch size')
+    parser.add_argument('--batch_size', type=int, default=48, help='batch size')
     parser.add_argument('--epoch', type=int, default=100, help='epoch')
     parser.add_argument('--lr', type=float, default=1e-3, help='init lr')
     parser.add_argument('--weight_decay', type=float, default=0, help='weight_decay in optimizer')

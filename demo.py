@@ -143,7 +143,7 @@ if __name__ == "__main__":
     mean = (0.485, 0.456, 0.406)
     std = (0.229, 0.224, 0.225)
     transforms = None
-    config.image_size = [416, 416]
+    config.selected_fold = [0]
 
     weight_path = os.path.join('checkpoints', model_type)
     lists = os.listdir(weight_path)  # 获得文件夹内所有文件
