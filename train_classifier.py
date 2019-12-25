@@ -15,7 +15,7 @@ from config import get_classify_config
 from solver import Solver
 from utils.set_seed import seed_torch
 from models.build_model import PrepareModel
-from datasets.create_dataset import GetDataloader
+from datasets.create_dataset import GetDataloader, get_dataloader_from_folder
 from losses.get_loss import Loss
 from utils.classification_metric import ClassificationMetric
 from datasets.data_augmentation import DataAugmentation
@@ -293,21 +293,34 @@ if __name__ == "__main__":
     else:
         transforms = None
 
-    get_dataloader = GetDataloader(
-        data_root, 
-        folds_split=folds_split, 
-        test_size=test_size, 
-        choose_dataset=config.choose_dataset,
-        load_split_from_file=config.load_split_from_file
-        )
+    if config.dataset_from_folder:
+        train_dataloaders, val_dataloaders, train_labels_number, _ = get_dataloader_from_folder(
+            data_root, 
+            config.image_size, 
+            transforms, 
+            mean, 
+            std, 
+            config.batch_size, 
+            multi_scale, 
+            )
+        train_dataloaders, val_dataloaders, train_labels_number_folds = [train_dataloaders], [val_dataloaders], [train_labels_number]
 
-    train_dataloaders, val_dataloaders, train_labels_number_folds, _ = get_dataloader.get_dataloader(
-        config.batch_size,
-        config.image_size,
-        mean, std,
-        transforms=transforms,
-        multi_scale=multi_scale
-    )
+    else:
+        get_dataloader = GetDataloader(
+            data_root, 
+            folds_split=folds_split, 
+            test_size=test_size, 
+            choose_dataset=config.choose_dataset,
+            load_split_from_file=config.load_split_from_file
+            )
+
+        train_dataloaders, val_dataloaders, train_labels_number_folds, _ = get_dataloader.get_dataloader(
+            config.batch_size,
+            config.image_size,
+            mean, std,
+            transforms=transforms,
+            multi_scale=multi_scale
+        )
 
     for fold_index, [train_loader, valid_loader, train_labels_number] in enumerate(zip(train_dataloaders, val_dataloaders, train_labels_number_folds)):
         if fold_index in config.selected_fold:

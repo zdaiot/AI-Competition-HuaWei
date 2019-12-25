@@ -19,7 +19,7 @@ from config import get_classify_config
 from solver import Solver
 from utils.set_seed import seed_torch
 from models.build_model import PrepareModel
-from datasets.create_dataset import GetDataloader
+from datasets.create_dataset import GetDataloader, get_dataloader_from_folder
 from losses.get_loss import Loss
 from utils.classification_metric import ClassificationMetric
 from datasets.data_augmentation import DataAugmentation
@@ -61,7 +61,7 @@ def prepare_data_on_modelarts(args):
     print(pip.read())
 
     # train_local: 用于训练过程中保存的输出位置，而train_url用于移动到OBS的位置
-    args.train_local = os.path.join(args.local_data_root, 'model_snapshots')
+    args.train_local = os.path.join(args.local_data_root, args.model_snapshots_name)
     if not os.path.exists(args.train_local):
         os.mkdir(args.train_local)
 
@@ -251,7 +251,8 @@ class TrainVal:
                 ),
                 state,
                 is_best,
-                self.bucket_name
+                self.bucket_name,
+                config.model_snapshots_name
             )
 
             # 写到tensorboard中
@@ -305,6 +306,7 @@ class TrainVal:
                     oa,
                     average_accuracy,
                     kappa,
+                    text_flag=0,
                     font_fname="../font/simhei.ttf"
                 )
             else:
@@ -346,23 +348,35 @@ if __name__ == "__main__":
     else:
         transforms = None
 
-    get_dataloader = GetDataloader(
-        config.data_local,
-        folds_split=folds_split,
-        test_size=test_size,
-        label_names_path=config.local_data_root+'label_id_name.json',
-        choose_dataset=config.choose_dataset,
-        load_split_from_file=config.load_split_from_file
-    )
+    if config.dataset_from_folder:
+        train_dataloaders, val_dataloaders, train_labels_number, _ = get_dataloader_from_folder(
+            data_root, 
+            config.image_size, 
+            transforms, 
+            mean, 
+            std, 
+            config.batch_size, 
+            multi_scale, 
+            )
+        train_dataloaders, val_dataloaders, train_labels_number_folds = [train_dataloaders], [val_dataloaders], [train_labels_number]
+    else:
+        get_dataloader = GetDataloader(
+            config.data_local,
+            folds_split=folds_split,
+            test_size=test_size,
+            label_names_path=config.local_data_root+'label_id_name.json',
+            choose_dataset=config.choose_dataset,
+            load_split_from_file=config.load_split_from_file
+        )
 
-    train_dataloaders, val_dataloaders, train_labels_number_folds, _ = get_dataloader.get_dataloader(
-        config.batch_size,
-        config.image_size,
-        mean, std,
-        transforms=transforms,
-        multi_scale=multi_scale,
-        draw_distribution=False
-    )
+        train_dataloaders, val_dataloaders, train_labels_number_folds, _ = get_dataloader.get_dataloader(
+            config.batch_size,
+            config.image_size,
+            mean, std,
+            transforms=transforms,
+            multi_scale=multi_scale,
+            draw_distribution=False
+        )
 
     for fold_index, [train_loader, valid_loader, train_labels_number] in enumerate(zip(train_dataloaders, val_dataloaders, train_labels_number_folds)):
         if fold_index in config.selected_fold:

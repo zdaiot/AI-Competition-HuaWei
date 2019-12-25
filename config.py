@@ -19,7 +19,7 @@ def get_classify_config():
 
     # -----------------------------------------超参数设置-----------------------------------------
     parser.add_argument('--batch_size', type=int, default=72, help='batch size')
-    parser.add_argument('--epoch', type=int, default=150, help='epoch')
+    parser.add_argument('--epoch', type=int, default=100, help='epoch')
     parser.add_argument('--lr', type=float, default=1e-3, help='init lr')
     parser.add_argument('--weight_decay', type=float, default=0, help='weight_decay in optimizer')
     
@@ -55,6 +55,8 @@ def get_classify_config():
     parser.add_argument('--val_size', type=float, default=0.2, help='the ratio of val data when n_splits=1.')
     parser.add_argument('--load_split_from_file', type=str, default='data/huawei_data/dataset_split_delete.json', 
                         help='Loading dataset split from this file')
+    parser.add_argument('--dataset_from_folder', type=str2bool, nargs='?', const=True, default=False,
+                        help='If True, then load datasets distinguished by train and valid')
 
     # -----------------------------------------模型设置-----------------------------------------
     parser.add_argument('--model_type', type=str, default='se_resnext101_32x4d',
@@ -86,6 +88,7 @@ def get_classify_config():
     parser.add_argument('--train_url', type=str, default='./checkpoints',
                         help='the path to save training outputs. For example: s3://ai-competition-zdaiot/logs/')
     parser.add_argument('--data_url', type=str, default='data/huawei_data/combine')
+    parser.add_argument('--model_snapshots_name', type=str, default='model_snapshots')
     parser.add_argument('--init_method', type=str)
 
     config = parser.parse_args()
@@ -99,4 +102,4 @@ if __name__ == '__main__':
     config = get_classify_config()
     print(config.augmentation_flag)
     print(config.image_size)
-    print(config.multi_scale_size, type(config.multi_scale_size))
+    print(config.dataset_from_folder, type(config.multi_scale_size))
