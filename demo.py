@@ -10,7 +10,7 @@ import shutil
 from PIL import Image, ImageFont, ImageDraw
 from models.build_model import PrepareModel
 from config import get_classify_config
-from datasets.create_dataset import GetDataloader
+from datasets.create_dataset import GetDataloader, get_dataloader_from_folder
 
 
 class DemoResults(object):
@@ -28,6 +28,7 @@ class DemoResults(object):
         self.model_type = config.model_type
         self.classes_num = config.num_classes
         self.drop_rate = config.drop_rate
+        self.bn_to_gn = config.bn_to_gn
         self.image_size = config.image_size
         self.weight_path = weight_path
         self.fold = str(fold)
@@ -121,7 +122,7 @@ class DemoResults(object):
             label_dict: dict，类标名称与类标之间的对应关系
         """
         prepare_model = PrepareModel()
-        model = prepare_model.create_model(self.model_type, self.classes_num, self.drop_rate, pretrained=False)
+        model = prepare_model.create_model(self.model_type, self.classes_num, self.drop_rate, pretrained=False, bn_to_gn=self.bn_to_gn)
         model.load_state_dict(torch.load(self.weight_path)['state_dict'])
         print('Successfully Loaded from %s' % self.weight_path)
         model = model.cuda()
@@ -152,22 +153,36 @@ if __name__ == "__main__":
 
     # 先删除该目录下所有的文件，再建立该文件夹
     save_path = 'data/demo_data/results'
-    shutil.rmtree(save_path)
+    if os.path.exists(save_path):
+        shutil.rmtree(save_path)
     os.makedirs(save_path)
 
-    get_dataloader = GetDataloader(
-        data_root, 
-        folds_split=folds_split, 
-        test_size=test_size, 
-        choose_dataset=config.choose_dataset,
-        load_split_from_file=config.load_split_from_file
-        )
-    train_dataloaders, val_dataloaders, _, _ = get_dataloader.get_dataloader(
-        config.batch_size, 
-        config.image_size, 
-        mean, std,
-        transforms=transforms
-        )
+    if config.dataset_from_folder:
+        train_dataloaders, val_dataloaders, train_labels_number, _ = get_dataloader_from_folder(
+            data_root,
+            config.image_size,
+            transforms,
+            mean,
+            std,
+            config.batch_size,
+            config.multi_scale
+            )
+        train_dataloaders, val_dataloaders, train_labels_number_folds = [train_dataloaders], [val_dataloaders], [train_labels_number]
+    else:
+
+        get_dataloader = GetDataloader(
+            data_root,
+            folds_split=folds_split,
+            test_size=test_size,
+            choose_dataset=config.choose_dataset,
+            load_split_from_file=config.load_split_from_file
+            )
+        train_dataloaders, val_dataloaders, _, _ = get_dataloader.get_dataloader(
+            config.batch_size,
+            config.image_size,
+            mean, std,
+            transforms=transforms
+            )
 
     for fold_index, [train_loader, valid_loader] in enumerate(zip(train_dataloaders, val_dataloaders)):
         if fold_index in config.selected_fold:

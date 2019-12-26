@@ -5,6 +5,25 @@ from models.custom_model import CustomModel
 from models.custom_attention_model import CustomLocalAttentionModel
 
 
+def convert_layers(model, layer_type_old, layer_type_new, convert_weights=False, num_groups=None):
+    for name, module in reversed(model._modules.items()):
+        if len(list(module.children())) > 0:
+            # recurse
+            model._modules[name] = convert_layers(module, layer_type_old, layer_type_new, convert_weights)
+
+        if type(module) == layer_type_old:
+            layer_old = module
+            layer_new = layer_type_new(module.num_features if num_groups is None else num_groups, module.num_features, module.eps, module.affine)
+
+            if convert_weights:
+                layer_new.weight = layer_old.weight
+                layer_new.bias = layer_old.bias
+
+            model._modules[name] = layer_new
+
+    return model
+
+
 class PrepareModel:
     """准备模型和优化器
     """
@@ -12,16 +31,19 @@ class PrepareModel:
     def __init__(self):
         pass
 
-    def create_model(self, model_type, classes_num, drop_rate=0, pretrained=True):
+    def create_model(self, model_type, classes_num, drop_rate=0, pretrained=True, bn_to_gn=False):
         """创建模型
         Args:
             model_type: str, 模型类型
             classes_num: int, 类别数目
             drop_rate: float, 分类层中的drop out系数
             pretrained: bool, 是否使用预训练模型
+            bn_to_gn: bool, 是否使用gn替换bn
         """
         print('Creating model: {}'.format(model_type))
         model = CustomModel(model_type, classes_num, drop_rate=drop_rate, pretrained=pretrained)
+        if bn_to_gn:
+            convert_layers(model, torch.nn.BatchNorm2d, torch.nn.GroupNorm, True, num_groups=16)
         return model
 
     def create_local_attention_model(self, model_type, classes_num, last_stride=2, drop_rate=0,

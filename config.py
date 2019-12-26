@@ -62,6 +62,8 @@ def get_classify_config():
     parser.add_argument('--model_type', type=str, default='se_resnext101_32x4d',
                         help='densenet201/efficientnet-b5/se_resnext101_32x4d')
     parser.add_argument('--drop_rate', type=float, default=0, help='dropout rate in classify module')
+    parser.add_argument('--bn_to_gn', type=str2bool, nargs='?', const=True, default=False, 
+                        help='change bn to gn')
     parser.add_argument('--restore', type=str, default='',
                         help='Load the weight file before training.'
                              'if it is equal to `last`, load the `model_best.pth` in the last modification folder. '

@@ -476,7 +476,7 @@ def get_dataloader_from_folder(
         image_size, 
         mean=mean, 
         std=std, 
-        multi_scale=multi_scale
+        multi_scale=False
         )
 
     train_dataloader = DataLoader(

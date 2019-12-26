@@ -112,13 +112,25 @@ class TrainVal:
             print('use exist pre-trained model at: %s' %
                   (os.path.abspath('/home/work/.cache/torch/checkpoints/se_resnext101_32x4d-3b2fe3d8.pth')))
 
+        # 拷贝预训练权重
+        print("=> using pre-trained model '{}'".format(config.model_type))
+        if not mox.file.exists('/home/work/.cache/torch/checkpoints/efficientnet-b5-b6417697.pth'):
+            mox.file.copy(os.path.join(self.bucket_name, 'model_zoo/efficientnet-b5-b6417697.pth'),
+                          '/home/work/.cache/torch/checkpoints/efficientnet-b5-b6417697.pth')
+            print('copy pre-trained model from OBS to: %s success' %
+                  (os.path.abspath('/home/work/.cache/torch/checkpoints/efficientnet-b5-b6417697.pth')))
+        else:
+            print('use exist pre-trained model at: %s' %
+                  (os.path.abspath('/home/work/.cache/torch/checkpoints/efficientnet-b5-b6417697.pth')))
+
         # 加载模型
         prepare_model = PrepareModel()
         self.model = prepare_model.create_model(
             model_type=config.model_type,
             classes_num=self.num_classes,
             drop_rate=config.drop_rate,
-            pretrained=True
+            pretrained=True,
+            bn_to_gn=config.bn_to_gn
         )
         self.model = torch.nn.DataParallel(self.model).cuda()
 
@@ -349,7 +361,7 @@ if __name__ == "__main__":
 
     if config.dataset_from_folder:
         train_dataloaders, val_dataloaders, train_labels_number, _ = get_dataloader_from_folder(
-            data_root, 
+            config.data_local, 
             config.image_size, 
             transforms, 
             mean, 

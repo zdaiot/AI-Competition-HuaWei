@@ -57,7 +57,8 @@ class TrainVal:
             model_type=config.model_type,
             classes_num=self.num_classes,
             drop_rate=config.drop_rate,
-            pretrained=True
+            pretrained=True,
+            bn_to_gn=config.bn_to_gn
         )
         if torch.cuda.is_available():
             self.model = torch.nn.DataParallel(self.model)
