@@ -1,4 +1,13 @@
+![image](readme/image.png)
 
+The code for  "华为云人工智能创新应用大赛". The main tasks of the competition are:
+
+The task of this competition is to classify the pictures of popular scenic spots, delicacies, specialties, folklore and handicrafts in Xi'an.
+
+Many strategies were tried during the competition, with a final score of 0.979 and a ranking of 32 / 732. 
+Although I didn't get a high ranking in the end, I have a deeper understanding of the classification problem, thanks to Huawei Cloud for organizing the competition. 
+
+This repositorie is suitable for solving all kinds of classification problems, supports a variety of training skills, and has high expansibility.
 
 ## Requirements
 
@@ -34,7 +43,29 @@ cd data
 ln -s your_data_path huawei_data
 ```
 
-### HuaWei Cloud Online Test
+It is important to note that the dataset should be organized in such a way that the following conditions are met:
+
+- The pictures and annotation files are stored in the same folder, as shown in the following figure:
+
+  ![dataset](readme/dataset.png)
+
+- The callout file is in txt format, and its contents are as follows:
+
+  ```
+  img_1.jpg, 0
+  ```
+
+If it is your own dataset, please process it to be consistent with the above format, otherwise it may cause an error in the running of the program.
+
+
+### Train
+
+```bash
+cd AI-Competition-HuaWei
+python train_classifier.py
+```
+
+## HuaWei Cloud Online Test
 
 We use `online-service` folder to accomplish online test on HuaWei ModelArts platform.  The struct of this folder is like the following:
 
@@ -73,14 +104,26 @@ Also, you must specified your dependencies in `config.json`:
 ]
 ```
 
-## Train
+## Demo
+
+First, manually create the following folder:
 
 ```bash
-cd AI-Competition-HuaWei
-python train_classifier.py
+mkdir data/demo_data
 ```
 
+After the training is complete, execute the following code to get a visual classification result, and the test will be carried out on the validation set:
+
+```bash
+python demo.py
+```
+
+After the test is completed, **the sample of the prediction error** will be stored in the `data/demo_data/results` folder.  Examples of demos are as follows:
+
+![img_2625](readme/img_2625.jpg)
+
 ## How to use obsutil
+
 ### Prepare obsutil
 Download obsutil from [here](https://support.huaweicloud.com/utiltg-obs/obs_11_0003.html). Unzip it to `./online-service`. After unzipping,  `./online-service` folder will contain `obsutil` and `setup.sh` files
 
@@ -205,6 +248,7 @@ Delete pictures with the following characteristics
 - erase_prob
 - gray_prob
 - cut_mix
+- Use more data augmentation, see [here](https://github.com/clovaai/CutMix-PyTorch/blob/e54b8387ad6f63d2b9cb2c1f9dc332aad2d185e1/train.py#L132). (Use Resize, RandomHorizontalFlip, ToTensor, jittering, lighting, Normalize. And use cutmix 0.967)
 
 ### Cross validation
 
@@ -218,11 +262,12 @@ Delete pictures with the following characteristics
 3. The training is divided into three stages, the first stage is trained at a lower resolution（256）, the second stage is fine-tuned at a medium resolution（336）, and the third stage is at a higher resolution（416）.
 4. Multi-scale training, switching resolution every several iterations.
 5. The training is divided into two stages, the first stage is based on all data sets, and the second stage is only fine-tuning on food. In the second stage of training, get rid of all data enhancement methods.（Not work）
+6. Save the optimal model using loss on the validation set（Not work, only 0.972）
 
 ### Losses
 
 - CrossEntropy
-- SmoothCrossEntropy
+- SmoothCrossEntropy（best）
 - FocalLoss
 - CB_Sigmoid
 - CB_Focal
@@ -252,7 +297,7 @@ Init Lr and weight decay
 
 - MultiStepLR（18/25，Not work 0.9710）
 
-#### Model type
+### Model type
 
 - densenet201
 
@@ -260,9 +305,9 @@ Init Lr and weight decay
 
 - se_resnext101_32x4d
 
-### TODO Tricks
+## Contributors
 
-- Save the optimal model using loss on the validation set（Not work, only 0.972）
-- Use more data augmentation, see [here](https://github.com/clovaai/CutMix-PyTorch/blob/e54b8387ad6f63d2b9cb2c1f9dc332aad2d185e1/train.py#L132). (Use Resize, RandomHorizontalFlip, ToTensor, jittering, lighting, Normalize. And use cutmix 0.967)
-- Change the weight normalization mode of class balance 
+* [XiangqianMa](https://github.com/XiangqianMa)
+* [Zdaiot](https://github.com/zdaiot)
+
 
